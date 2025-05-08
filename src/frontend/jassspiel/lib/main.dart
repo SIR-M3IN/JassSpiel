@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'pages/start.dart';
 import 'pages/users_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'pages/game.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => Start(),
         '/second': (context) => UsersPage(),
+        '/third': (context) => const Game(),
       },
     );
   }
