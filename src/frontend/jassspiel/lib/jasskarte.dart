@@ -1,9 +1,11 @@
 import 'enums.dart';
 
 class Jasskarte {
-  String name;
+  Symbol symbol;
   CardType cardType;
-  bool isTrumpf;
-  int value;
-  Jasskarte(this.name,this.cardType,this.isTrumpf,this.value);
+  late bool isTrumpf;
+  late int value;
+  String path;
+  Jasskarte(this.symbol,this.cardType,this.isTrumpf,this.value, this.path);
+  Jasskarte.wheninit (this.symbol, this.cardType, this.path);
 }

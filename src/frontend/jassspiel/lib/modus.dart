@@ -7,8 +7,8 @@ abstract class Modus{
   late int pointstotal;
   late TrumpfOptions trumpf;
   List<Jasskarte> availablecards = [];
-  List<Spieler> players;
-  Modus(this.players);
+  late List<Spieler> players;
+  Modus(this.availablecards);
   void dealcards();
   Spieler announcewinner();
 }
