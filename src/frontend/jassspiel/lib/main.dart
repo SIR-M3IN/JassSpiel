@@ -1,31 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/start.dart';
 import 'pages/users_page.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/game.dart';
 
-void main() async{
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
     url: 'https://wzhaxvxfhdcrpyiswybf.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6aGF4dnhmaGRjcnB5aXN3eWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDA1MTEsImV4cCI6MjA2MjAxNjUxMX0.yzYZ4jHfAlq2CgpkN_oAue71LLNzAYzP0ABSj1YbFNs',
   );
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'JassSpiel',
+      debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => Start(),
-        '/second': (context) => UsersPage(),
-        '/third': (context) => const Game(),
+        '/': (context) => const Start(),
+        '/users': (context) => const UsersPage(),
+      },
+
+      onGenerateRoute: (settings) {
+        if (settings.name == '/game') {
+          final args = settings.arguments as Map<String, String>;
+          return MaterialPageRoute(
+            builder: (_) => GamePage(
+              gid: args['gid']!,
+              uid: args['uid']!,
+            ),
+          );
+        }
+        return null;
       },
     );
   }
 }
+
 
