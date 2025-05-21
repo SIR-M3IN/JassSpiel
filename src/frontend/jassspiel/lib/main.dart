@@ -63,10 +63,26 @@ class CardGameApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: GameScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const StartPage(),
+        '/users': (context) => const UsersPage(),
+      },
+
+      onGenerateRoute: (settings) {
+        if (settings.name == '/game') {
+          final args = settings.arguments as Map<String, String>;
+          return MaterialPageRoute(
+            builder: (_) => GamePage(
+              gid: args['gid']!,
+              uid: args['uid']!,
+            ),
+          );
+        }
+        return null;
+      },
     );
   }
 }
-
 
 
