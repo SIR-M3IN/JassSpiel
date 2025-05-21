@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => const Start(),
+        '/': (context) => const StartPage(),
         '/users': (context) => const UsersPage(),
       },
 

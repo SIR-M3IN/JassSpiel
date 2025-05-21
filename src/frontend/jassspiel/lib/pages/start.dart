@@ -1,210 +1,172 @@
-import 'dart:convert';
+// lib/pages/start.dart
+
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'game.dart';
-import 'dart:async'; 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
-class Start extends StatefulWidget {
-  const Start({super.key});
+class StartPage extends StatefulWidget {
+  const StartPage({super.key});
+
   @override
-  State<Start> createState() => _StartState();
+  State<StartPage> createState() => _StartPageState();
 }
 
-class _StartState extends State<Start> {
-  final _supabase = Supabase.instance.client;
-  final TextEditingController _nameController = TextEditingController();
-  final Random _rnd = Random();
-  late Future<List<Room>> _roomsFuture;
-  StreamSubscription<List<Map<String, dynamic>>>? _userGameSub;
+class _StartPageState extends State<StartPage> {
+  final _nameController = TextEditingController();
+  final _codeController = TextEditingController();
+  final _uuid = const Uuid();
 
-  @override
-  void initState() {
-    super.initState();
-    // 1) einmalig laden
-    _roomsFuture = _fetchRooms();
-
-    // 2) Subscription auf UserGame‐Tabelle
-    _userGameSub = _supabase
-      .from('UserGame')
-      .stream(primaryKey: ['uid','gid'])  // eindeutige Schlüssel
-      .listen((_) {
-        // whenever something changes → neu laden
-        setState(() {
-          _roomsFuture = _fetchRooms();
-        });
-      });
+  String generatePartyCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final rnd = Random();
+    return List.generate(5, (index) => chars[rnd.nextInt(chars.length)]).join();
   }
 
-
-  @override
-  void dispose() {
-    _userGameSub?.cancel();
-    super.dispose();
+  Future<bool> isCodeAvailable(String code) async {
+    final resp = await Supabase.instance.client
+        .from('games')
+        .select('gid')
+        .eq('gid', code)
+        .maybeSingle();
+    return resp == null;
   }
 
-  Future<void> _loadRandomName() async {
-    final jsonStr = await rootBundle.loadString(
-      'assets/Random_Names/random_double_names.json',
-    );
-    final List<dynamic> list = json.decode(jsonStr);
-    if (list.isNotEmpty) {
-      setState(() {
-        _nameController.text = list[_rnd.nextInt(list.length)] as String;
-      });
-    }
-  }
+  Future<String> createGameWithCode() async {
+    String code;
+    do {
+      code = generatePartyCode();
+    } while (!(await isCodeAvailable(code)));
 
-  Future<List<Room>> _fetchRooms() async {
-    final response = await _supabase
-        .from('Games')
-        .select('gid, status, UserGame!inner(uid, User(name))');
-    return response.map((room) {
-      final gid = room['gid'] as String;
-      final participants = (room['UserGame'] as List)
-          .map((ug) => ug['User']['name'] as String)
-          .toList();
-      return Room(gid: gid, participants: participants);
-    }).toList();
-  }
-
-  Future<void> _createAndJoinRoom() async {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) return;
-
-    // 1) Upsert User
-    final userResp = await _supabase
-        .from('User')
-        .upsert({'name': name}, onConflict: 'name')
-        .select()
-        .single();
-    final uid = userResp['uid'] as String;
-
-    // 2) Create Game
-    final gameResp = await _supabase
-        .from('Games')
-        .insert({'status': 'waiting'})
-        .select()
-        .single();
-    final gid = gameResp['gid'] as String;
-
-    // 3) Join UserGame
-    await _supabase.from('UserGame').insert({
-      'uid': uid,
-      'gid': gid,
-      'score': 0,
+    await Supabase.instance.client.from('games').insert({
+      'gid': code,
+      'status': 'waiting',
+      'participants': 1,
+      'room_name': 'Neuer Raum',
     });
 
-    // 4) Navigate with arguments
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => GamePage(gid: gid, uid: uid),
-      ),
-    );
+    return code;
   }
 
-  Widget _buildNameField() => Card(
-        elevation: 4,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.symmetric(horizontal: 32),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: TextField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              labelText: 'Name',
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: _loadRandomName,
-              ),
-            ),
-          ),
-        ),
-      );
+  Future<bool> joinGame(String code) async {
+    final response = await Supabase.instance.client
+        .from('games')
+        .select('participants')
+        .eq('gid', code)
+        .maybeSingle();
 
-  Widget _roomCard(Room room) => Card(
-        elevation: 2,
-        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Room: ${room.gid}',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text('${room.participants.length} Teilnehmer'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children:
-                    room.participants.map((n) => Chip(label: Text(n))).toList(),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // statt pushNamed mit aktuellen Name-Controller:
-                    Navigator.of(context).pushNamed(
-                      '/game',
-                      arguments: {
-                        'gid': room.gid,
-                        'uid': _nameController.text.trim(),
-                      },
-                    );
-                  },
-                  child: const Text('Enter'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+    if (response != null) {
+      final current = response['participants'] as int? ?? 0;
+      await Supabase.instance.client
+          .from('games')
+          .update({'participants': current + 1})
+          .eq('gid', code);
+      return true;
+    }
+    return false;
+  }
+
+  void _showSnack(String msg, [Color? color]) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: color),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Center(
-        child: SingleChildScrollView(
-          child:
-              Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const SizedBox(height: 24),
-            _buildNameField(),
-            const SizedBox(height: 24),
-            FutureBuilder<List<Room>>(
-              future: _roomsFuture,
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
-                final rooms = snap.data ?? [];
-                if (rooms.isEmpty) {
-                  return const Text('Keine Räume gefunden.');
-                }
-                return Column(children: rooms.map(_roomCard).toList());
-              },
+      appBar: AppBar(title: const Text('JassSpiel')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(),
+              ),
             ),
-          ]),
+            const SizedBox(height: 20),
+
+            TextField(
+              controller: _codeController,
+              decoration: const InputDecoration(
+                labelText: 'Party Code (zum Beitreten)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Buttons nebeneinander
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Start Game (neuen Raum erstellen)
+                ElevatedButton(
+                  onPressed: () async {
+                    final name = _nameController.text.trim();
+                    if (name.isEmpty) {
+                      _showSnack('Bitte zuerst einen Namen eingeben.', Colors.red);
+                      return;
+                    }
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('name', name);
+
+                    final gid = await createGameWithCode();
+                    print('🎉 Raum erstellt mit Code: $gid');
+
+                    final uid = _uuid.v4();
+                    Navigator.pushNamed(
+                      context,
+                      '/game',
+                      arguments: {'gid': gid, 'uid': uid},
+                    );
+                  },
+                  child: const Text('Start Game'),
+                ),
+
+                ElevatedButton(
+                  onPressed: () async {
+                    final name = _nameController.text.trim();
+                    final code = _codeController.text.trim();
+                    if (name.isEmpty || code.isEmpty) {
+                      _showSnack('Name und Partycode sind erforderlich.', Colors.red);
+                      return;
+                    }
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('name', name);
+
+                    final ok = await joinGame(code);
+                    if (!ok) {
+                      _showSnack('Raum mit Code $code nicht gefunden.', Colors.red);
+                      return;
+                    }
+
+                    print('✅ Dem Raum $code beigetreten');
+                    final uid = _uuid.v4();
+                    Navigator.pushNamed(
+                      context,
+                      '/game',
+                      arguments: {'gid': code, 'uid': uid},
+                    );
+                  },
+                  child: const Text('Join Game'),
+                ),
+              ],
+            ),
+          ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _createAndJoinRoom,
-        child: const Icon(Icons.add),
       ),
     );
   }
-}
 
-// Hilfsklasse für einen Raum
-class Room {
-  final String gid;
-  final List<String> participants;
-  Room({required this.gid, required this.participants});
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _codeController.dispose();
+    super.dispose();
+  }
 }
