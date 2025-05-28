@@ -1,3 +1,5 @@
+// start.dart
+
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,134 +17,126 @@ class _StartPageState extends State<StartPage> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
   final _uuid = const Uuid();
-  final _nameFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _loadName();
 
-    _nameFocusNode.addListener(() async {
-      if (!_nameFocusNode.hasFocus) {
-        final name = _nameController.text.trim();
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('name', name);
+    // Nach dem ersten Frame den gespeicherten Namen laden
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      final savedName = prefs.getString('name');
+      if (savedName != null) {
+        _nameController.text = savedName;
       }
     });
   }
 
-  Future<void> _loadName() async {
+  Future<void> _saveName(String name) async {
     final prefs = await SharedPreferences.getInstance();
-    final savedName = prefs.getString('name');
-    if (savedName != null) {
-      _nameController.text = savedName;
-    }
+    await prefs.setString('name', name);
   }
 
-  Future<void> saveUserIfNeeded(String uid, String name) async {
-  final existing = await Supabase.instance.client
-      .from('User')
-      .select()
-      .eq('uid', uid)
-      .maybeSingle();
-
-  if (existing == null) {
-    await Supabase.instance.client.from('User').insert({
-      'uid': uid,
-      'name': name,
-      'totalpoints': 0,
-      'gamesplayed': 0,
-    });
-  } else {
-    await Supabase.instance.client
+  Future<void> _saveUserIfNeeded(String uid, String name) async {
+    final existing = await Supabase.instance.client
         .from('User')
-        .update({'name': name})
-        .eq('uid', uid);
+        .select()
+        .eq('UID', uid)
+        .maybeSingle();
+    if (existing == null) {
+      await Supabase.instance.client
+          .from('User')
+          .insert({'UID': uid, 'name': name});
+    } else {
+      await Supabase.instance.client
+          .from('User')
+          .update({'name': name})
+          .eq('UID', uid);
     }
   }
 
-
-  Future<String> getOrCreateUid() async {
+  Future<String> _getOrCreateUid() async {
     final prefs = await SharedPreferences.getInstance();
-    String? uid = prefs.getString('uid');
+    var uid = prefs.getString('UID');
     if (uid == null) {
       uid = _uuid.v4();
-      await prefs.setString('uid', uid);
+      await prefs.setString('UID', uid);
     }
     return uid;
   }
 
-  String generatePartyCode() {
+  String _generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final rnd = Random();
-    return List.generate(4, (index) => chars[rnd.nextInt(chars.length)]).join();
+    return List.generate(4, (_) => chars[rnd.nextInt(chars.length)]).join();
   }
 
-  Future<bool> isCodeAvailable(String code) async {
+  Future<bool> _isCodeAvailable(String code) async {
     final resp = await Supabase.instance.client
         .from('games')
-        .select('gid')
-        .eq('gid', code)
+        .select('GID')
+        .eq('GID', code)
         .maybeSingle();
     return resp == null;
   }
 
-  Future<String> createGameWithCode() async {
+  Future<String> _createGame() async {
     String code;
     do {
-      code = generatePartyCode();
-    } while (!(await isCodeAvailable(code)));
+      code = _generateCode();
+    } while (!(await _isCodeAvailable(code)));
 
     await Supabase.instance.client.from('games').insert({
-      'gid': code,
+      'GID': code,
       'status': 'waiting',
       'participants': 1,
       'room_name': 'Neuer Raum',
     });
-
     return code;
   }
 
-  Future<bool> joinGame(String code) async {
-    final response = await Supabase.instance.client
+  Future<bool> _joinGame(String code) async {
+    final resp = await Supabase.instance.client
         .from('games')
         .select('participants')
-        .eq('gid', code)
+        .eq('GID', code)
         .maybeSingle();
-
-    if (response != null) {
-      final current = response['participants'] as int? ?? 0;
+    if (resp != null) {
+      final current = resp['participants'] as int? ?? 0;
       await Supabase.instance.client
           .from('games')
           .update({'participants': current + 1})
-          .eq('gid', code);
+          .eq('GID', code);
       return true;
     }
     return false;
   }
 
-  Future<void> saveUserToGame(String uid, String gid) async {
+  Future<void> _saveUserToGame(String uid, String gid) async {
     final existing = await Supabase.instance.client
         .from('usergame')
         .select()
-        .eq('uid', uid)
-        .eq('gid', gid)
+        .eq('UID', uid)
+        .eq('GID', gid)
         .maybeSingle();
-
     if (existing == null) {
-      await Supabase.instance.client.from('usergame').insert({
-        'uid': uid,
-        'gid': gid,
-        'score': 0,
-      });
+      await Supabase.instance.client
+          .from('usergame')
+          .insert({'UID': uid, 'GID': gid, 'score': 0});
     }
   }
 
-
   void _showSnack(String msg, [Color? color]) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color),
+      SnackBar(content: Text(msg), backgroundColor: color ?? Colors.black),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _codeController.dispose();
+    super.dispose();
   }
 
   @override
@@ -156,11 +150,11 @@ class _StartPageState extends State<StartPage> {
           children: [
             TextField(
               controller: _nameController,
-              focusNode: _nameFocusNode,
               decoration: const InputDecoration(
                 labelText: 'Name',
                 border: OutlineInputBorder(),
               ),
+              onChanged: _saveName,
             ),
             const SizedBox(height: 20),
             TextField(
@@ -171,7 +165,6 @@ class _StartPageState extends State<StartPage> {
               ),
             ),
             const SizedBox(height: 20),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -182,14 +175,11 @@ class _StartPageState extends State<StartPage> {
                       _showSnack('Bitte zuerst einen Namen eingeben.', Colors.red);
                       return;
                     }
-
-                    final gid = await createGameWithCode();
-                    final uid = await getOrCreateUid();
-                    await saveUserIfNeeded(uid, name); 
-                    await saveUserToGame(uid, gid);
-
-
-                    Navigator.pushNamed(context, '/game', arguments: {'gid': gid, 'uid': uid});
+                    final gid = await _createGame();
+                    final uid = await _getOrCreateUid();
+                    await _saveUserIfNeeded(uid, name);
+                    await _saveUserToGame(uid, gid);
+                    Navigator.pushNamed(context, '/game');
                   },
                   child: const Text('Start Game'),
                 ),
@@ -201,18 +191,15 @@ class _StartPageState extends State<StartPage> {
                       _showSnack('Name und Partycode sind erforderlich.', Colors.red);
                       return;
                     }
-
-                    final ok = await joinGame(code);
+                    final ok = await _joinGame(code);
                     if (!ok) {
                       _showSnack('Raum mit Code $code nicht gefunden.', Colors.red);
                       return;
                     }
-                    
-                    final uid = await getOrCreateUid();
-                    await saveUserIfNeeded(uid, name);
-                    await saveUserToGame(uid, code);
-
-                    Navigator.pushNamed(context, '/game', arguments: {'gid': code, 'uid': uid});
+                    final uid = await _getOrCreateUid();
+                    await _saveUserIfNeeded(uid, name);
+                    await _saveUserToGame(uid, code);
+                    Navigator.pushNamed(context, '/game');
                   },
                   child: const Text('Join Game'),
                 ),
@@ -222,13 +209,5 @@ class _StartPageState extends State<StartPage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _codeController.dispose();
-    _nameFocusNode.dispose();
-    super.dispose();
   }
 }
