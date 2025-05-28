@@ -1,5 +1,3 @@
-import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -18,23 +16,36 @@ class CardGameApp extends StatelessWidget {
   }
 }
 
-class GameScreen extends StatelessWidget {
+class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final laubCards = [
-      'Laub_6.png',
-      'Laub_7.png',
-      'Laub_8.png',
-      'Laub_9.png',
-      'Laub_10.png',
-      'Laub_Ass.png',
-      'Laub_König.png',
-      'Laub_Ober.png',
-      'Laub_Unter.png',
-    ];
+  State<GameScreen> createState() => _GameScreenState();
+}
 
+class _GameScreenState extends State<GameScreen> {
+  final List<String> playedCards = [];
+
+  final laubCards = [
+    'Laub_6.png',
+    'Laub_7.png',
+    'Laub_8.png',
+    'Laub_9.png',
+    'Laub_10.png',
+    'Laub_Ass.png',
+    'Laub_König.png',
+    'Laub_Ober.png',
+    'Laub_Unter.png',
+  ];
+
+  void _addPlayedCard(String card) {
+    setState(() {
+      playedCards.add(card);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 38, 82, 7),
       body: Center(
@@ -63,31 +74,37 @@ class GameScreen extends StatelessWidget {
                   right: 16,
                   child: playerAvatar('Player 3'),
                 ),
-                Center(
-                  child: DragTarget<String>(
-                    onAcceptWithDetails: (receivedCard) {
-                      print('Gespielte Karte: $receivedCard');
-                    },
-                    builder: (context, candidateData, rejectedData) {
-                      return Container(
-                        width: 300,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.black26,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            PlayedCard('Laub_10.png'),
-                            PlayedCard('Laub_8.png'),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+
+                // Zentrale Spielfläche
+              Center(
+                child: DragTarget<String>(
+                onAcceptWithDetails: (DragTargetDetails<String> details) {
+                  _addPlayedCard(details.data);
+                },
+                  builder: (context, candidateData, rejectedData) {
+                    return Container(
+                      width: 330,
+                      height: 130,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black26,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(4, (index) {
+                          if (index < playedCards.length) {
+                            return PlayedCard(playedCards[index]);
+                          } else {
+                            return const SizedBox(width: 70, height: 100); // Leerer Platzhalter
+                          }
+                        }),
+                      ),
+                    );
+                  },
                 ),
+              ),
+
 
                 Positioned(
                   bottom: 0,
@@ -141,9 +158,9 @@ class CardHand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 130, // Höhe für die Karten unten
+      height: 130,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24), // Abstand zu den Seiten
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Center(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -153,7 +170,7 @@ class CardHand extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: SizedBox(
-                    width: 60,  // Karten etwas kleiner
+                    width: 60,
                     height: 90,
                     child: CardWidget(assetName: card),
                   ),
@@ -167,8 +184,6 @@ class CardHand extends StatelessWidget {
   }
 }
 
-
-// Prompt: Mache das ich die Karten durch Drag and drop bewegen kann
 class CardWidget extends StatelessWidget {
   final String assetName;
 
