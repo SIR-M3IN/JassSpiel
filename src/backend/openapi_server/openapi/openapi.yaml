@@ -1,0 +1,440 @@
+openapi: 3.0.3
+info:
+  description: "API für ein Kartenspiel mit Benutzer-, Spiel- und Rundeverwaltung"
+  title: Card Game API
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+paths:
+  /cards:
+    get:
+      operationId: cards_get
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Card'
+                type: array
+          description: Kartenliste
+      summary: Alle Karten abrufen
+      tags:
+      - Card
+      x-openapi-router-controller: openapi_server.controllers.card_controller
+  /cardsingame:
+    post:
+      operationId: cardsingame_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardInGames'
+        required: true
+      responses:
+        "201":
+          description: Karte zugamesewiesen
+      summary: Karte einem Benutzer in einem Spiel zuweisen
+      tags:
+      - Card
+      x-openapi-router-controller: openapi_server.controllers.card_controller
+  /games:
+    get:
+      operationId: games_get
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Game'
+                type: array
+          description: Liste aller Spiele
+      summary: Alle Spiele abrufen
+      tags:
+      - Game
+      x-openapi-router-controller: openapi_server.controllers.game_controller
+    post:
+      operationId: games_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Game'
+        required: true
+      responses:
+        "201":
+          description: Spiel erstellt
+      summary: Neues Spiel erstellen
+      tags:
+      - Game
+      x-openapi-router-controller: openapi_server.controllers.game_controller
+  /games/{gid}:
+    get:
+      operationId: games_gid_get
+      parameters:
+      - explode: false
+        in: path
+        name: gid
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+          description: Spiel gefunden
+        "404":
+          description: Spiel nicht gefunden
+      summary: Spiel anhand GID abrufen
+      tags:
+      - Game
+      x-openapi-router-controller: openapi_server.controllers.game_controller
+    put:
+      operationId: update_game
+      summary: Aktualisiere die Teilnehmerzahl
+      parameters:
+        - name: gid
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participants:
+                  type: integer
+      x-openapi-router-controller: openapi_server.controllers.game_controller
+      responses:
+        '200':
+          description: Spiel aktualisiert
+        '400':
+          description: Ungültige Anfrage
+        '404':
+          description: Spiel nicht gefunden
+
+
+  /plays:
+    post:
+      operationId: plays_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Play'
+        required: true
+      responses:
+        "201":
+          description: Spielzug gespeichert
+      summary: Spielzug erfassen
+      tags:
+      - Play
+      x-openapi-router-controller: openapi_server.controllers.play_controller
+  /rounds:
+    post:
+      operationId: rounds_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Round'
+        required: true
+      responses:
+        "201":
+          description: Runde erstellt
+      summary: Neue Runde erstellen
+      tags:
+      - Round
+      x-openapi-router-controller: openapi_server.controllers.round_controller
+  /rounds/{rid}/plays:
+    get:
+      operationId: rounds_rid_plays_get
+      parameters:
+      - explode: false
+        in: path
+        name: rid
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Play'
+                type: array
+          description: Liste aller Spielzüge der Runde
+      summary: Alle Spielzüge einer Runde abrufen
+      tags:
+      - Round
+      x-openapi-router-controller: openapi_server.controllers.round_controller
+  /usergame:
+    post:
+      operationId: usergame_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGame'
+        required: true
+      responses:
+        "201":
+          description: Zuordnung gespeichert
+      summary: Benutzer einem Spiel zuordnen
+      tags:
+      - User
+      x-openapi-router-controller: openapi_server.controllers.user_controller
+  /users:
+    get:
+      operationId: users_get
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/User'
+                type: array
+          description: Liste aller Benutzer
+      summary: Alle Benutzer abrufen
+      tags:
+      - User
+      x-openapi-router-controller: openapi_server.controllers.user_controller
+    post:
+      operationId: users_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+        required: true
+      responses:
+        "201":
+          description: Benutzer erstellt
+      summary: Neuen Benutzer erstellen
+      tags:
+      - User
+      x-openapi-router-controller: openapi_server.controllers.user_controller
+  /users/{uid}:
+    get:
+      operationId: users_uid_get
+      parameters:
+      - explode: false
+        in: path
+        name: uid
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Benutzer gefunden
+        "404":
+          description: Benutzer nicht gefunden
+      summary: Benutzer anhand UID abrufen
+      tags:
+      - User
+      x-openapi-router-controller: openapi_server.controllers.user_controller
+components:
+  schemas:
+    User:
+      example:
+        GamesWon: 6
+        UID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        TotalPoints: 0
+        Name: Name
+        GamesPlayed: 1
+      properties:
+        UID:
+          format: uuid
+          title: UID
+          type: string
+        Name:
+          title: Name
+          type: string
+        TotalPoints:
+          title: TotalPoints
+          type: integer
+        GamesWon:
+          title: GamesWon
+          type: integer
+        GamesPlayed:
+          title: GamesPlayed
+          type: integer
+      title: User
+      type: object
+    UserCreate:
+      example:
+        Name: Name
+      properties:
+        Name:
+          title: Name
+          type: string
+      required:
+      - Name
+      title: UserCreate
+      type: object
+    Game:
+      title: Game
+      type: object
+      required:
+        - GID
+        - status
+        - room_name
+        - participants
+      properties:
+        GID:
+          type: string
+          title: GID
+          example: PDL96
+        status:
+          type: string
+          title: status
+          example: waiting
+        room_name:
+          type: string
+          title: Room Name
+          example: Neuer Raum
+        participants:
+          type: integer
+          title: Participants
+          example: 1
+
+    UserGame:
+      example:
+        UID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        Score: 0
+        GID: PDL96
+      properties:
+        UID:
+          format: uuid
+          title: UID
+          type: string
+        GID:
+          example: PDL96
+          title: GID
+          type: string
+        Score:
+          title: Score
+          type: integer
+      required:
+      - GID
+      - UID
+      title: UserGame
+      type: object
+    Card:
+      example:
+        IsTrumpf: true
+        Symbol: Symbol
+        CardType: CardType
+        CID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        CID:
+          format: uuid
+          title: CID
+          type: string
+        Symbol:
+          title: Symbol
+          type: string
+        CardType:
+          title: CardType
+          type: string
+        IsTrumpf:
+          title: IsTrumpf
+          type: boolean
+      title: Card
+      type: object
+    CardInGames:
+      example:
+        UID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        GID: PDL96
+        CID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        CID:
+          format: uuid
+          title: CID
+          type: string
+        UID:
+          format: uuid
+          title: UID
+          type: string
+        GID:
+          example: PDL96
+          title: GID
+          type: string
+      required:
+      - CID
+      - GID
+      - UID
+      title: CardInGames
+      type: object
+    Round:
+      example:
+        GID: PDL96
+        WhichRound: 0
+        RID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        WinnerID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        RID:
+          format: uuid
+          title: RID
+          type: string
+        GID:
+          example: PDL96
+          title: GID
+          type: string
+        WinnerID:
+          format: uuid
+          title: WinnerID
+          type: string
+        WhichRound:
+          title: WhichRound
+          type: integer
+      required:
+      - GID
+      - WhichRound
+      title: Round
+      type: object
+    Play:
+      example:
+        UID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        PID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        RID: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        CardPlayed: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        PID:
+          format: uuid
+          title: PID
+          type: string
+        RID:
+          format: uuid
+          title: RID
+          type: string
+        UID:
+          format: uuid
+          title: UID
+          type: string
+        CardPlayed:
+          format: uuid
+          title: CardPlayed
+          type: string
+      required:
+      - RID
+      - UID
+      title: Play
+      type: object
