@@ -1,61 +1,133 @@
 import 'dart:async';
-import 'package:jassspiel/spieler.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'jasskarte.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jassspiel/spieler.dart';
+import 'package:jassspiel/jasskarte.dart';
+
 class DbConnection {
-  static Future<void> initialize() async {
+  final SupabaseClient client = Supabase.instance.client;
+  final Uuid _uuid = const Uuid();
+
+  static Future<void> initialize({required String url, required String anonKey}) async {
     await Supabase.initialize(
-      url: 'https://wzhaxvxfhdcrpyiswybf.supabase.co/',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6aGF4dnhmaGRjcnB5aXN3eWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDA1MTEsImV4cCI6MjA2MjAxNjUxMX0.yzYZ4jHfAlq2CgpkN_oAue71LLNzAYzP0ABSj1YbFNs',
+      url: url,
+      anonKey: anonKey,
     );
   }
 
-  final SupabaseClient client = Supabase.instance.client;
-
-  Future<List<Jasskarte>> getAllCards() async {
-    final response = await client
-        .from('Jasskarten')
-        .select('CID, symbol, cardtype');
-    List<Jasskarte> cards = [];
-    for (final item in response) {
-      final card = Jasskarte.wheninit(
-        item['symbol'],
-        item['CID'],
-        item['cardtype'],
-        'assets/${item['symbol']}/${item['symbol']}_${item['cardtype']}.png',
-      );
-      cards.add(card);
+    Future<List<Jasskarte>> getAllCards() async {
+      final response = await client
+          .from('Jasskarten')
+          .select('CID, symbol, cardtype');
+      List<Jasskarte> cards = [];
+      for (final item in response) {
+        final card = Jasskarte.wheninit(
+          item['symbol'],
+          item['CID'],
+          item['cardtype'],
+          'assets/${item['symbol']}/${item['symbol']}_${item['cardtype']}.png',
+        );
+        cards.add(card);
+      }
+      return cards;
     }
-    return cards;
+
+  Future<String> getOrCreateUid() async {
+    final prefs = await SharedPreferences.getInstance();
+    var uid = prefs.getString('UID');
+    if (uid == null) {
+      uid = _uuid.v4();
+      await prefs.setString('UID', uid);
+    }
+    return uid;
   }
 
+  Future<void> saveUserIfNeeded(String uid, String name) async {
+    final existing = await client
+        .from('User')
+        .select()
+        .eq('UID', uid)
+        .maybeSingle();
+    if (existing == null) {
+      await client.from('User').insert({'UID': uid, 'name': name});
+    } else {
+      await client.from('User').update({'name': name}).eq('UID', uid);
+    }
+  }
+
+  Future<String> createGame() async {
+    String code;
+    do {
+      code = _generateCode();
+    } while (!await isCodeAvailable(code));
+
+    await client.from('games').insert({
+      'GID': code,
+      'status': 'waiting',
+      'participants': 1,
+      'room_name': 'Neuer Raum',
+    });
+    return code;
+  }
+
+  Future<bool> joinGame(String code) async {
+    final resp = await client
+        .from('games')
+        .select('participants')
+        .eq('GID', code)
+        .maybeSingle();
+    if (resp != null) {
+      final current = resp['participants'] as int? ?? 0;
+      await client.from('games').update({'participants': current + 1}).eq('GID', code);
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> addPlayerToGame(String gid, String uid, String name) async {
+    // Stelle sicher, dass der User existiert
+    await saveUserIfNeeded(uid, name);
+
+    final existing = await client
+        .from('usergame')
+        .select()
+        .eq('UID', uid)
+        .eq('GID', gid)
+        .maybeSingle();
+    if (existing != null) return;
+
+    final count = (await client.from('usergame').select('UID').eq('GID', gid)).length;
+    final number = count + 1;
+
+    await client.from('usergame').insert({
+      'GID': gid,
+      'UID': uid,
+      'playernumber': number,
+      'score': 0,
+    });
+  }
 
   Future<List<Spieler>> loadPlayers(String gid) async {
-    print('Loading players for GID: $gid');
     final response = await client
         .from('usergame')
         .select('playernumber, User!usergame_UID_fkey(UID,name)')
         .eq('GID', gid);
-    print('Response: $response');
-    List<Spieler> players = [];
-    for (final item in response) {
-    final spieler = Spieler(
-      item['User']['UID'],
-      item['User']['name'],
-      item['playernumber'], 
-    );
 
-      print('added player: ${spieler.username} with UID: ${spieler.uid}');
-      players.add(spieler);
-    }
-    print('Loaded players: ${players.length}');
-    return players;
+    return response.map<Spieler>((item) {
+      return Spieler(
+        item['User']['UID'],
+        item['User']['name'],
+        item['playernumber'] as int,
+      );
+    }).toList();
   }
+
 
   void shuffleCards(List<Jasskarte> cards, List<Spieler> players, String gid) async {
     cards.shuffle();
-    for (int i = 0; i < players.length; i++) {
+    for (var i = 0; i < players.length; i++) {
       final hand = cards.sublist(i * 9, (i + 1) * 9);
       for (final card in hand) {
         await client.from('cardingames').insert({
@@ -66,29 +138,36 @@ class DbConnection {
       }
     }
   }
-  //Halb mit KI halb selber: Bsp Code aus Doku, mache das für UserGame
-Future<List<Spieler>> waitForFourPlayers(String gid) {
-  final completer = Completer<List<Spieler>>();
-  void checkPlayers() async {
-    final players = await loadPlayers(gid);
-    print('Anzahl Spieler: ${players.length}');
-    if (players.length == 4) {
-      completer.complete(players);
-    }
-  }
-  checkPlayers();
-  final channel = client.channel('public:cardingame');
-  channel.onPostgresChanges(
-    event: PostgresChangeEvent.all,
-    schema: 'public',
-    table: 'cardingames',
-    callback: (payload) {
-      checkPlayers();
-    },
-  ).subscribe();
-  
-  return completer.future;
-}
 
-  
+  Future<List<Spieler>> waitForFourPlayers(String gid) {
+    final completer = Completer<List<Spieler>>();
+    void checkPlayers() async {
+      final players = await loadPlayers(gid);
+      if (players.length == 4) {
+        completer.complete(players);
+      }
+    }
+
+    checkPlayers();
+    final channel = client.channel('public:usergame');
+    channel.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'usergame',
+      callback: (_) => checkPlayers(),
+    ).subscribe();
+
+    return completer.future;
+  }
+
+  String _generateCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final rnd = Random();
+    return List.generate(4, (_) => chars[rnd.nextInt(chars.length)]).join();
+  }
+
+  Future<bool> isCodeAvailable(String code) async {
+    final resp = await client.from('games').select('GID').eq('GID', code).maybeSingle();
+    return resp == null;
+  }
 }
