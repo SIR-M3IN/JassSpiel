@@ -9,7 +9,8 @@ class Spieler{
   List<Jasskarte> playedcard = [];
   int get howmanycards => cards.length;
   String uid;
-  Spieler(this.uid, this.username );
+  int playernumber;
+  Spieler(this.uid, this.username, this.playernumber);
   void draw(){}
   void sortcards(){}
   void playcard(Jasskarte karte){}

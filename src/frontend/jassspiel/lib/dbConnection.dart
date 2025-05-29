@@ -30,11 +30,12 @@ class DbConnection {
     return cards;
   }
 
+
   Future<List<Spieler>> loadPlayers(String gid) async {
     print('Loading players for GID: $gid');
     final response = await client
         .from('usergame')
-        .select('User!usergame_UID_fkey(UID,name)')
+        .select('playernumber, User!usergame_UID_fkey(UID,name)')
         .eq('GID', gid);
     print('Response: $response');
     List<Spieler> players = [];
@@ -42,6 +43,7 @@ class DbConnection {
       final spieler = Spieler(
         item['User']['UID'], 
         item['User']['name'],
+        int.parse(item['User']['playernumber']),
       );
       print('added player: ${spieler.username} with UID: ${spieler.uid}');
       players.add(spieler);
