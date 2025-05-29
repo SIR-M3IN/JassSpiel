@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 import 'jasskarte.dart';
 
 class Spieler{
@@ -6,13 +8,8 @@ class Spieler{
   List<Jasskarte> gainedcard = [];
   List<Jasskarte> playedcard = [];
   int get howmanycards => cards.length;
-  int points;
-  Spieler(
-    {
-      required this.username, 
-      required this.points,
-      this.cards = const [],
-    });
+  String uid;
+  Spieler(this.uid, this.username );
   void draw(){}
   void sortcards(){}
   void playcard(Jasskarte karte){}

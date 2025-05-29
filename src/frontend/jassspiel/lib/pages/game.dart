@@ -1,8 +1,72 @@
 import 'package:flutter/material.dart';
+import 'package:jassspiel/gamelogic.dart';
+import '../spieler.dart';
 
 void main() {
   runApp(const CardGameApp());
 }
+// KI: Baue mir ein Widget welches genau 1x aufgerufen wird, wenn die App gestartet wird. Außerdem soll es den Parameter GID definieren
+class InitWidget extends StatefulWidget {
+  final String gid;
+  const InitWidget({required this.gid, super.key});
+
+  @override
+  _InitWidgetState createState() => _InitWidgetState();
+}
+
+class _InitWidgetState extends State<InitWidget> {
+  late GameLogic gameLogic;
+  bool loading = true;
+  List<Spieler> players = [];
+
+  @override
+  void initState() {
+    super.initState();
+    gameLogic = GameLogic(widget.gid);
+    _loadPlayersAndWait();
+  }
+
+  Future<void> _loadPlayersAndWait() async {
+    // Hier Beispiel: poll alle 2 Sekunden bis 4 Spieler da sind
+    while (true) {
+      List<Spieler> loadedPlayers = await gameLogic.loadPlayers();
+      print(loadedPlayers.length);
+      if (loadedPlayers.length == 4) {
+        setState(() {
+          players = loadedPlayers;
+          loading = false;
+        });
+        // Nach erfolgreichem Laden navigieren wir zum Spielbildschirm
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => GameScreen(), // Du kannst hier Spieler auch mitgeben falls gewünscht
+            ),
+          );
+        }
+        break;
+      } else {
+        setState(() {
+          loading = true;
+        });
+      }
+      await Future.delayed(const Duration(seconds: 2));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: loading
+            ? const Text('Waiting for players...', style: TextStyle(fontSize: 24))
+            : Text('Players loaded!'),
+      ),
+    );
+  }
+}
+
+
 
 class CardGameApp extends StatelessWidget {
   const CardGameApp({super.key});
@@ -37,6 +101,7 @@ class _GameScreenState extends State<GameScreen> {
     'Laub_Ober.png',
     'Laub_Unter.png',
   ];
+  
 
   void _addPlayedCard(String card) {
     setState(() {

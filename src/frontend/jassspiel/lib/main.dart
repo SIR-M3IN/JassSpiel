@@ -1,5 +1,5 @@
 // import 'package:flutter/material.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 // import 'pages/start.dart';
 // import 'pages/users_page.dart';
 // import 'pages/game.dart';
@@ -45,9 +45,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pages/game.dart';
 import 'pages/users_page.dart';
+import 'pages/start.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+    await Supabase.initialize(
+    url: 'https://wzhaxvxfhdcrpyiswybf.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6aGF4dnhmaGRjcnB5aXN3eWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDA1MTEsImV4cCI6MjA2MjAxNjUxMX0.yzYZ4jHfAlq2CgpkN_oAue71LLNzAYzP0ABSj1YbFNs',
+  );
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
@@ -62,7 +67,7 @@ class CardGameApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
@@ -71,18 +76,27 @@ class CardGameApp extends StatelessWidget {
         '/users': (context) => const UsersPage(),
       },
 
-      onGenerateRoute: (settings) {
-        if (settings.name == '/game') {
-          final args = settings.arguments as Map<String, String>;
-          return MaterialPageRoute(
-            builder: (_) => GamePage(
-              gid: args['gid']!,
-              uid: args['uid']!,
-            ),
-          );
-        }
-        return null;
-      },
+    onGenerateRoute: (settings) {
+    if (settings.name == '/init') {
+      final args = settings.arguments;
+      if (args is Map<String, dynamic> && args['gid'] is String) {
+        final gid = args['gid'] as String;
+        print(gid);
+        return MaterialPageRoute(
+          builder: (context) => InitWidget(gid: gid),
+        );
+      } else {
+        // Optionally handle bad/missing arguments
+        return MaterialPageRoute(
+          builder: (context) => const Scaffold(
+            body: Center(child: Text('Missing or invalid gid : ')),
+          ),
+        );
+      }
+    }
+    return null;
+  }
+
     );
   }
 }

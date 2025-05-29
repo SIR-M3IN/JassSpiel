@@ -179,7 +179,7 @@ class _StartPageState extends State<StartPage> {
                     final uid = await _getOrCreateUid();
                     await _saveUserIfNeeded(uid, name);
                     await _saveUserToGame(uid, gid);
-                    Navigator.pushNamed(context, '/game');
+                    Navigator.pushNamed(context, '/init', arguments: {'gid': gid});
                   },
                   child: const Text('Start Game'),
                 ),
@@ -199,7 +199,7 @@ class _StartPageState extends State<StartPage> {
                     final uid = await _getOrCreateUid();
                     await _saveUserIfNeeded(uid, name);
                     await _saveUserToGame(uid, code);
-                    Navigator.pushNamed(context, '/game');
+                    Navigator.pushNamed(context, '/init', arguments: {'gid':code});
                   },
                   child: const Text('Join Game'),
                 ),
