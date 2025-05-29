@@ -34,7 +34,7 @@ class DbConnection {
     print('Loading players for GID: $gid');
     final response = await client
         .from('usergame')
-        .select('User(UID,name)')
+        .select('User!usergame_UID_fkey(UID,name)')
         .eq('GID', gid);
     print('Response: $response');
     List<Spieler> players = [];
