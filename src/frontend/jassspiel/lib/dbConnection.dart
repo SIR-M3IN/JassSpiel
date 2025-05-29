@@ -40,11 +40,12 @@ class DbConnection {
     print('Response: $response');
     List<Spieler> players = [];
     for (final item in response) {
-      final spieler = Spieler(
-        item['User']['UID'], 
-        item['User']['name'],
-        int.parse(item['User']['playernumber']),
-      );
+    final spieler = Spieler(
+      item['User']['UID'],
+      item['User']['name'],
+      item['playernumber'], 
+    );
+
       print('added player: ${spieler.username} with UID: ${spieler.uid}');
       players.add(spieler);
     }
