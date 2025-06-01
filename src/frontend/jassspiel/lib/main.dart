@@ -72,30 +72,29 @@ class CardGameApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const StartPage(),
-        '/game': (context) => const GameScreen(),
         '/users': (context) => const UsersPage(),
       },
 
     onGenerateRoute: (settings) {
+      //KI: Fix das 
     if (settings.name == '/init') {
       final args = settings.arguments;
-      if (args is Map<String, dynamic> && args['gid'] is String) {
-        final gid = args['gid'] as String;
-        print(gid);
+      if (args is Map<String, dynamic> && args['gid'] is String && args['uid'] is String) {
         return MaterialPageRoute(
-          builder: (context) => InitWidget(gid: gid),
-        );
-      } else {
-        // Optionally handle bad/missing arguments
-        return MaterialPageRoute(
-          builder: (context) => const Scaffold(
-            body: Center(child: Text('Missing or invalid gid : ')),
-          ),
+          builder: (context) => InitWidget(gid: args['gid'], uid: args['uid']),
         );
       }
     }
-    return null;
-  }
+    if (settings.name == '/game') {
+      final args = settings.arguments;
+      if (args is Map<String, dynamic> && args['gid'] is String && args['uid'] is String) {
+        return MaterialPageRoute(
+          builder: (context) => GameScreen(gid: args['gid'], uid: args['uid']),
+        );
+      }
+    }
+    return null; // fallback
+  },
 
     );
   }

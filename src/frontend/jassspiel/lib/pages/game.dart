@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:jassspiel/DBConnection.dart';
 import 'package:jassspiel/gamelogic.dart';
 import '../spieler.dart';
+import '../jasskarte.dart';
 
 void main() {
   runApp(const CardGameApp());
@@ -8,7 +10,8 @@ void main() {
 // KI: Baue mir ein Widget welches genau 1x aufgerufen wird, wenn die App gestartet wird. Außerdem soll es den Parameter GID definieren
 class InitWidget extends StatefulWidget {
   final String gid;
-  const InitWidget({required this.gid, super.key});
+  final String uid;
+  const InitWidget({required this.gid, required this.uid, super.key});
 
   @override
   _InitWidgetState createState() => _InitWidgetState();
@@ -25,34 +28,37 @@ class _InitWidgetState extends State<InitWidget> {
     gameLogic = GameLogic(widget.gid);
     _loadPlayersAndWait();
   }
+  	
+Future<void> _loadPlayersAndWait() async {
+  while (true) {
+    List<Spieler> loadedPlayers = await gameLogic.loadPlayers();
+    print(loadedPlayers.length);
 
-  Future<void> _loadPlayersAndWait() async {
-    // Hier Beispiel: poll alle 2 Sekunden bis 4 Spieler da sind
-    while (true) {
-      List<Spieler> loadedPlayers = await gameLogic.loadPlayers();
-      print(loadedPlayers.length);
-      if (loadedPlayers.length == 4) {
-        setState(() {
-          players = loadedPlayers;
-          loading = false;
-        });
-        // Nach erfolgreichem Laden navigieren wir zum Spielbildschirm
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => GameScreen(), // Du kannst hier Spieler auch mitgeben falls gewünscht
-            ),
-          );
-        }
-        break;
-      } else {
-        setState(() {
-          loading = true;
-        });
-      }
-      await Future.delayed(const Duration(seconds: 2));
+    if (loadedPlayers.length == 4) {
+      if (!mounted) return;
+
+      setState(() {
+        players = loadedPlayers;
+        loading = false;
+      });
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => GameScreen(gid: widget.gid, uid: widget.uid),
+        ),
+      );
+
+      break;
+    } else {
+      setState(() {
+        loading = true;
+      });
     }
+
+    await Future.delayed(const Duration(seconds: 2));
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -73,24 +79,28 @@ class CardGameApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: GameScreen(),
+      home: GameScreen(gid: 'temp', uid: 'temp'), 
     );
   }
 }
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+  final String gid;
+  final String uid;
+  late List<String> playedCards = [];
+  GameScreen({required this.gid, required this.uid, super.key});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
-
 class _GameScreenState extends State<GameScreen> {
-  final List<String> playedCards = [];
+  DbConnection db = DbConnection();
+  late List<String> playedCards = [];
+  late Future<List<Jasskarte>> playerCards = Future.value([]);
 
-  final laubCards = [
+  final laubCards = [ 
     'Laub_6.png',
     'Laub_7.png',
     'Laub_8.png',
@@ -103,11 +113,33 @@ class _GameScreenState extends State<GameScreen> {
   ];
   
 
-  void _addPlayedCard(String card) {
+  void _addPlayedCard(String card) async {
     setState(() {
       playedCards.add(card);
+      
     });
+    
   }
+  
+
+@override
+void initState() {
+  super.initState();
+  _initializeGame();
+}
+
+void _initializeGame() async {
+  GameLogic log = GameLogic(widget.gid);
+  DbConnection con = DbConnection();
+
+  List<Spieler> players = await con.loadPlayers(widget.gid);
+
+  playerCards = log.shuffleandgetCards(players, widget.uid);
+
+
+  setState(() {}); // damit das UI aktualisiert wird
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +193,7 @@ class _GameScreenState extends State<GameScreen> {
                           if (index < playedCards.length) {
                             return PlayedCard(playedCards[index]);
                           } else {
-                            return const SizedBox(width: 70, height: 100); // Leerer Platzhalter
+                            return const SizedBox(width: 70, height: 100);
                           }
                         }),
                       ),
@@ -170,12 +202,28 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
 
-
+// KI: Kartenhand des Spielers geht nicht fixen bitte 
                 Positioned(
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  child: CardHand(cards: laubCards),
+                    child: FutureBuilder<List<Jasskarte>>(
+                    future: playerCards,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Fehler: ${snapshot.error}'));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text('Keine Karten gefunden'));
+                      } else {
+                        List<String> cardNames = snapshot.data!.map((k) => k.path).toList();
+
+                        return CardHand(cards: cardNames);
+                      }
+                    },
+
+                ),
                 ),
               ],
             ),
@@ -206,7 +254,7 @@ class PlayedCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Image.asset(
-        'assets/Laub/$image',
+        image,
         width: 70,
         height: 100,
         fit: BoxFit.cover,
@@ -261,7 +309,7 @@ class CardWidget extends StatelessWidget {
       feedback: Material(
         color: Colors.transparent,
         child: Image.asset(
-          'assets/Laub/$assetName',
+          assetName,
           width: 80,
           height: 120,
           fit: BoxFit.cover,
@@ -270,14 +318,14 @@ class CardWidget extends StatelessWidget {
       childWhenDragging: Opacity(
         opacity: 0.5,
         child: Image.asset(
-          'assets/Laub/$assetName',
+          assetName,
           width: 80,
           height: 120,
           fit: BoxFit.cover,
         ),
       ),
       child: Image.asset(
-        'assets/Laub/$assetName',
+        assetName,
         width: 80,
         height: 120,
         fit: BoxFit.cover,

@@ -84,7 +84,7 @@ class _StartPageState extends State<StartPage> {
                     await db.saveUserIfNeeded(uid, name);
                     final gid = await db.createGame();
                     await db.addPlayerToGame(gid, uid, name);
-                    Navigator.pushNamed(context, '/init', arguments: {'gid': gid});
+                    Navigator.pushNamed(context, '/init', arguments: {'gid': gid, 'uid': uid});
                   },
                   child: const Text('Start Game'),
                 ),

@@ -18,10 +18,12 @@ class DbConnection {
   }
 
     Future<List<Jasskarte>> getAllCards() async {
+      print('GetAllCards Called');
       final response = await client
-          .from('Jasskarten')
+          .from('card')
           .select('CID, symbol, cardtype');
       List<Jasskarte> cards = [];
+      print('Response length: ${response.length}');
       for (final item in response) {
         final card = Jasskarte.wheninit(
           item['symbol'],
@@ -30,6 +32,7 @@ class DbConnection {
           'assets/${item['symbol']}/${item['symbol']}_${item['cardtype']}.png',
         );
         cards.add(card);
+        print('Card added: ${card.symbol}, ${card.cid}, ${card.cardType}');
       }
       return cards;
     }
@@ -104,8 +107,6 @@ class DbConnection {
     await client.from('usergame').insert({
       'GID': gid,
       'UID': uid,
-      'playernumber': number,
-      'score': 0,
     });
   }
 
@@ -125,8 +126,9 @@ class DbConnection {
   }
 
 
-  void shuffleCards(List<Jasskarte> cards, List<Spieler> players, String gid) async {
+  Future<void> shuffleCards(List<Jasskarte> cards, List<Spieler> players, String gid) async {
     cards.shuffle();
+    print('Shuffle Cards Called');
     for (var i = 0; i < players.length; i++) {
       final hand = cards.sublist(i * 9, (i + 1) * 9);
       for (final card in hand) {
@@ -138,6 +140,28 @@ class DbConnection {
       }
     }
   }
+  Future<List<Jasskarte>> getUrCards(String gid, String uid) async {
+    print('GID: $gid, UID: $uid');
+    final response = await client
+        .from('cardingames')
+        .select('CID, card(symbol, cardtype)')
+        .eq('UID', uid)
+        .eq('GID', gid);
+    List<Jasskarte> cards = [];
+    for (final item in response) {
+      final cardData = item['card']; // Hier liegen symbol und cardtype
+      final card = Jasskarte.wheninit(
+        cardData['symbol'],
+        item['CID'],
+        cardData['cardtype'],
+        'assets/${cardData['symbol']}/${cardData['symbol']}_${cardData['cardtype']}.png',
+      );
+      cards.add(card);
+    }
+    return cards;
+
+  }
+
 
   Future<List<Spieler>> waitForFourPlayers(String gid) {
     final completer = Completer<List<Spieler>>();
