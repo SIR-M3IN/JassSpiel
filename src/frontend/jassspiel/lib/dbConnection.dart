@@ -107,6 +107,7 @@ class DbConnection {
     await client.from('usergame').insert({
       'GID': gid,
       'UID': uid,
+      'playernumber': number,
     });
   }
 
