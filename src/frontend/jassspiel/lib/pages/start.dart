@@ -12,6 +12,7 @@ class StartPage extends StatefulWidget {
 class _StartPageState extends State<StartPage> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -74,20 +75,32 @@ class _StartPageState extends State<StartPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () async {
-                    final name = _nameController.text.trim();
-                    if (name.isEmpty) {
-                      _showSnack('Bitte zuerst einen Namen eingeben.', Colors.red);
-                      return;
-                    }
-                    final uid = await db.getOrCreateUid();
-                    await db.saveUserIfNeeded(uid, name);
-                    final gid = await db.createGame();
-                    await db.addPlayerToGame(gid, uid, name);
-                    Navigator.pushNamed(context, '/init', arguments: {'gid': gid, 'uid': uid});
-                  },
-                  child: const Text('Start Game'),
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          setState(() => _isLoading = true);
+                          final name = _nameController.text.trim();
+                          if (name.isEmpty) {
+                            _showSnack('Bitte zuerst einen Namen eingeben.', Colors.red);
+                            setState(() => _isLoading = false);
+                            return;
+                          }
+                          try {
+                            final uid = await db.getOrCreateUid();
+                            await db.saveUserIfNeeded(uid, name);
+                            final gid = await db.createGame();
+                            await db.addPlayerToGame(gid, uid, name);
+                            if (!mounted) return;
+                            Navigator.pushNamed(context, '/init', arguments: {'gid': gid, 'uid': uid});
+                          } catch (e) {
+                            _showSnack('Fehler: $e', Colors.red);
+                          } finally {
+                            setState(() => _isLoading = false);
+                          }
+                      },
+                  child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Start Game'),
                 ),
+
                 ElevatedButton(
                   onPressed: () async {
                     final name = _nameController.text.trim();
