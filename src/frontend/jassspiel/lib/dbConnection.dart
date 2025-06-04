@@ -168,7 +168,7 @@ class DbConnection {
     return cards;
   }
   Future<void> addPlayInRound(String rid, String uid, String cid) async {
-    await client.from('playinround').insert({
+    await client.from('plays').insert({
       'RID': rid,
       'UID': uid,
       'CID': cid,

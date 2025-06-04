@@ -99,7 +99,6 @@ class CardGameApp extends StatelessWidget {
 class GameScreen extends StatefulWidget {
   final String gid;
   final String uid;
-  late List<Jasskarte> playedCards = [];
   GameScreen({required this.gid, required this.uid, super.key});
 
   @override
@@ -109,15 +108,23 @@ class _GameScreenState extends State<GameScreen> {
   DbConnection db = DbConnection();
   late GameLogic gameLogic;
   int counter = 0;
-  late List<Jasskarte> playedCards = [];
+  List<Jasskarte> playedCards = [];
   late Future<List<Jasskarte>> playerCards = Future.value([]);
   
 
-  void _addPlayedCard(Jasskarte card) {
+void _addPlayedCard(Jasskarte card) {
+  setState(() {
+    playedCards.add(card);
+  });
+
+  playerCards.then((list) {
+    final updated = List<Jasskarte>.from(list)..remove(card);
     setState(() {
-      playedCards.add(card);
+      playerCards = Future.value(updated); 
     });
-  }
+  });
+}
+
 
   
 
@@ -132,7 +139,7 @@ void _initializeGame() async {
   DbConnection con = DbConnection();
   List<Spieler> players = await con.loadPlayers(widget.gid);
   Future<List<Jasskarte>> loadedCards = gameLogic.shuffleandgetCards(players, widget.uid);
-  gameLogic.startnewRound();
+  gameLogic.startNewRound(widget.uid);
   setState(() {playerCards = loadedCards;}); // damit das UI aktualisiert wird
 }
 
@@ -172,13 +179,14 @@ void _initializeGame() async {
               Center(
                 child: 
                 DragTarget<Jasskarte>(
-                  onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) {
+                  onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
                     _addPlayedCard(details.data);
-                    db.addPlayInRound(db.GetRoundID(widget.gid) as String, widget.uid, details.data.cid);
+                    String roundId = await db.GetRoundID(widget.gid);
+                    db.addPlayInRound(roundId, widget.uid, details.data.cid);
                     counter++;
                     if (counter == 4) {
                       counter = 0;
-                      gameLogic.startnewRound();
+                      gameLogic.startNewRound(widget.uid);
                     }
                   },
                   builder: (context, candidateData, rejectedData) {
@@ -309,33 +317,39 @@ class CardWidget extends StatelessWidget {
   final Jasskarte card;
 
   const CardWidget({required this.card, super.key});
+
   @override
   Widget build(BuildContext context) {
     return Draggable<Jasskarte>(
       data: card,
+
+      // 👇 Das ist das "fliegende" Bild
       feedback: Material(
         color: Colors.transparent,
-        child: Image.asset(
-          card.path,
+        child: SizedBox(
           width: 80,
           height: 120,
-          fit: BoxFit.cover,
+          child: Image.asset(
+            card.path,
+            fit: BoxFit.cover,
+          ),
         ),
       ),
-      childWhenDragging: Opacity(
-        opacity: 0.5,
-        child: Image.asset(
-          card.path,
-          width: 80,
-          height: 120,
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Image.asset(
-        card.path,
+
+      // 👇 Das wird an der Ursprungsposition angezeigt, während du ziehst
+      childWhenDragging: const SizedBox(
         width: 80,
         height: 120,
-        fit: BoxFit.cover,
+      ),
+
+      // 👇 Das ist das normale Bild, wenn NICHT gezogen wird
+      child: SizedBox(
+        width: 80,
+        height: 120,
+        child: Image.asset(
+          card.path,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
