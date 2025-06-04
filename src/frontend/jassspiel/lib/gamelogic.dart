@@ -11,16 +11,22 @@ class GameLogic{
     List<Spieler> players = await dbConnection.loadPlayers(gid);
     return players;
   }
+  void startnewRound() async {
+    int whichround = await dbConnection.getWhichRound(gid);
+    await dbConnection.startNewRound(gid, whichround);
+  }
+  
   Future<List<Jasskarte>> shuffleandgetCards(List<Spieler> players, String uid) async {
-    print('Players Length: ${players.length}');
     for (var player in players) {
-      //if (player.uid == uid && player.playernumber == 1) {
+      print(player.username);
+      print(player.uid);
+      print(player.playernumber);
+      if (player.uid == uid && player.playernumber == 1) {
           List<Jasskarte> cards = await dbConnection.getAllCards();
           print('Shuffling cards');
           await dbConnection.shuffleCards(cards, players, gid); 
-      //}
+      }
     }
-    return await dbConnection.getUrCards(gid, uid);
-    
+    return await dbConnection.getUrCards(gid, uid); 
   }
 }

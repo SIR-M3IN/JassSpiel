@@ -89,7 +89,7 @@ class DbConnection {
     return false;
   }
 
-  Future<void> addPlayerToGame(String gid, String uid, String name) async {
+    Future<void> addPlayerToGame(String gid, String uid, String name) async {
     // Stelle sicher, dass der User existiert
     await saveUserIfNeeded(uid, name);
 
@@ -101,12 +101,19 @@ class DbConnection {
         .maybeSingle();
     if (existing != null) return;
 
-    final count = (await client.from('usergame').select('UID').eq('GID', gid)).length;
-    final number = count + 1;
+    final result = await client
+        .from('usergame')
+        .select('playernumber')
+        .eq('GID', gid);
+
+    final numbers = result.map((e) => e['playernumber'] as int).toList();
+    final number = (numbers.isEmpty ? 1 : (numbers.reduce(max) + 1));
+
 
     await client.from('usergame').insert({
       'GID': gid,
       'UID': uid,
+      'playernumber': number,
     });
   }
 
@@ -130,7 +137,7 @@ class DbConnection {
     cards.shuffle();
     print('Shuffle Cards Called');
     for (var i = 0; i < players.length; i++) {
-      final hand = cards.sublist(i * 9, (i + 1) * 9);
+    final hand = cards.sublist(i * 9, (i + 1) * 9);
       for (final card in hand) {
         await client.from('cardingames').insert({
           'UID': players[i].uid,
@@ -159,9 +166,28 @@ class DbConnection {
       cards.add(card);
     }
     return cards;
-
   }
-
+  Future<void> addPlayInRound(String rid, String uid, String cid) async {
+    await client.from('playinround').insert({
+      'RID': rid,
+      'UID': uid,
+      'CID': cid,
+    });
+  }
+  Future<String> GetRoundID(String gid) async {
+    final response = await client
+        .from('rounds')
+        .select('RID')
+        .eq('GID', gid)
+        .order('whichround', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    if (response != null) {
+      return response['RID'];
+    } else {
+      throw Exception('No round found for GID: $gid');
+    }
+  }
 
   Future<List<Spieler>> waitForFourPlayers(String gid) {
     final completer = Completer<List<Spieler>>();
@@ -194,4 +220,25 @@ class DbConnection {
     final resp = await client.from('games').select('GID').eq('GID', code).maybeSingle();
     return resp == null;
   }
+  Future<void> startNewRound(String gid, int whichround) async {
+    await client.from('rounds').insert({
+      'GID': gid,
+      'whichround': whichround + 1,
+    });
+  }
+Future<int> getWhichRound(String gid) async {
+  final response = await client
+      .from('rounds')
+      .select('whichround')
+      .eq('GID', gid)
+      .order('whichround', ascending: false) 
+      .limit(1)
+      .maybeSingle();
+
+  if (response != null) {
+    return response['whichround'] as int;
+  } else {
+    return -1; 
+  }
+}
 }

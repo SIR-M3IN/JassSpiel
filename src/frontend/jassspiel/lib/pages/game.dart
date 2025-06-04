@@ -28,49 +28,59 @@ class _InitWidgetState extends State<InitWidget> {
     gameLogic = GameLogic(widget.gid);
     _loadPlayersAndWait();
   }
-  	
-Future<void> _loadPlayersAndWait() async {
-  while (true) {
-    List<Spieler> loadedPlayers = await gameLogic.loadPlayers();
-    print(loadedPlayers.length);
 
-    if (loadedPlayers.length == 4) {
+  Future<void> _loadPlayersAndWait() async {
+    while (mounted) {
+      List<Spieler> loadedPlayers = await gameLogic.loadPlayers();
+
       if (!mounted) return;
 
-      setState(() {
-        players = loadedPlayers;
-        loading = false;
-      });
+      if (loadedPlayers.length == 4) {
+        setState(() {
+          players = loadedPlayers;
+          loading = false;
+        });
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => GameScreen(gid: widget.gid, uid: widget.uid),
-        ),
-      );
+        if (!mounted) return;
 
-      break;
-    } else {
-      setState(() {
-        loading = true;
-      });
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => GameScreen(gid: widget.gid, uid: widget.uid),
+          ),
+        );
+
+        break;
+      } else {
+        if (!mounted) return;
+
+        setState(() {
+          loading = true;
+        });
+      }
+
+      await Future.delayed(const Duration(seconds: 2));
     }
-
-    await Future.delayed(const Duration(seconds: 2));
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: loading
-            ? const Text('Waiting for players...', style: TextStyle(fontSize: 24))
-            : Text('Players loaded!'),
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Waiting for players...', style: TextStyle(fontSize: 24)),
+                  const SizedBox(height: 16),
+                  Text('Party Code: ${widget.gid}', style: const TextStyle(fontSize: 18)),
+                ],
+              )
+            : const Text('Players loaded!'),
       ),
     );
   }
 }
+
 
 
 
@@ -89,7 +99,7 @@ class CardGameApp extends StatelessWidget {
 class GameScreen extends StatefulWidget {
   final String gid;
   final String uid;
-  late List<String> playedCards = [];
+  late List<Jasskarte> playedCards = [];
   GameScreen({required this.gid, required this.uid, super.key});
 
   @override
@@ -97,47 +107,33 @@ class GameScreen extends StatefulWidget {
 }
 class _GameScreenState extends State<GameScreen> {
   DbConnection db = DbConnection();
-  late List<String> playedCards = [];
+  late GameLogic gameLogic;
+  int counter = 0;
+  late List<Jasskarte> playedCards = [];
   late Future<List<Jasskarte>> playerCards = Future.value([]);
-
-  final laubCards = [ 
-    'Laub_6.png',
-    'Laub_7.png',
-    'Laub_8.png',
-    'Laub_9.png',
-    'Laub_10.png',
-    'Laub_Ass.png',
-    'Laub_König.png',
-    'Laub_Ober.png',
-    'Laub_Unter.png',
-  ];
   
 
-  void _addPlayedCard(String card) async {
+  void _addPlayedCard(Jasskarte card) {
     setState(() {
       playedCards.add(card);
-      
     });
-    
   }
+
   
 
 @override
 void initState() {
   super.initState();
+  gameLogic = GameLogic(widget.gid);
   _initializeGame();
 }
 
 void _initializeGame() async {
-  GameLogic log = GameLogic(widget.gid);
   DbConnection con = DbConnection();
-
   List<Spieler> players = await con.loadPlayers(widget.gid);
-
-  playerCards = log.shuffleandgetCards(players, widget.uid);
-
-
-  setState(() {}); // damit das UI aktualisiert wird
+  Future<List<Jasskarte>> loadedCards = gameLogic.shuffleandgetCards(players, widget.uid);
+  gameLogic.startnewRound();
+  setState(() {playerCards = loadedCards;}); // damit das UI aktualisiert wird
 }
 
 
@@ -174,10 +170,17 @@ void _initializeGame() async {
 
                 // Zentrale Spielfläche
               Center(
-                child: DragTarget<String>(
-                onAcceptWithDetails: (DragTargetDetails<String> details) {
-                  _addPlayedCard(details.data);
-                },
+                child: 
+                DragTarget<Jasskarte>(
+                  onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) {
+                    _addPlayedCard(details.data);
+                    db.addPlayInRound(db.GetRoundID(widget.gid) as String, widget.uid, details.data.cid);
+                    counter++;
+                    if (counter == 4) {
+                      counter = 0;
+                      gameLogic.startnewRound();
+                    }
+                  },
                   builder: (context, candidateData, rejectedData) {
                     return Container(
                       width: 330,
@@ -200,6 +203,7 @@ void _initializeGame() async {
                     );
                   },
                 ),
+
               ),
 
 // KI: Kartenhand des Spielers geht nicht fixen bitte 
@@ -210,6 +214,10 @@ void _initializeGame() async {
                     child: FutureBuilder<List<Jasskarte>>(
                     future: playerCards,
                     builder: (context, snapshot) {
+                      print('Snapshot state: ${snapshot.connectionState}');
+                      print('Snapshot error: ${snapshot.error}');
+                      print('Snapshot data: ${snapshot.data}');
+
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
@@ -217,13 +225,11 @@ void _initializeGame() async {
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(child: Text('Keine Karten gefunden'));
                       } else {
-                        List<String> cardNames = snapshot.data!.map((k) => k.path).toList();
-
-                        return CardHand(cards: cardNames);
+                        return CardHand(cards: snapshot.data!);
                       }
                     },
+                  ),
 
-                ),
                 ),
               ],
             ),
@@ -245,16 +251,16 @@ void _initializeGame() async {
 }
 
 class PlayedCard extends StatelessWidget {
-  final String image;
+  final Jasskarte card;
 
-  const PlayedCard(this.image, {super.key});
+  const PlayedCard(this.card, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Image.asset(
-        image,
+        card.path,
         width: 70,
         height: 100,
         fit: BoxFit.cover,
@@ -263,8 +269,9 @@ class PlayedCard extends StatelessWidget {
   }
 }
 
+
 class CardHand extends StatelessWidget {
-  final List<String> cards;
+  final List<Jasskarte> cards;
 
   const CardHand({required this.cards, super.key});
 
@@ -285,7 +292,7 @@ class CardHand extends StatelessWidget {
                   child: SizedBox(
                     width: 60,
                     height: 90,
-                    child: CardWidget(assetName: card),
+                    child: CardWidget(card: card),
                   ),
                 );
               }).toList(),
@@ -297,19 +304,19 @@ class CardHand extends StatelessWidget {
   }
 }
 
+
 class CardWidget extends StatelessWidget {
-  final String assetName;
+  final Jasskarte card;
 
-  const CardWidget({required this.assetName, super.key});
-
+  const CardWidget({required this.card, super.key});
   @override
   Widget build(BuildContext context) {
-    return Draggable<String>(
-      data: assetName,
+    return Draggable<Jasskarte>(
+      data: card,
       feedback: Material(
         color: Colors.transparent,
         child: Image.asset(
-          assetName,
+          card.path,
           width: 80,
           height: 120,
           fit: BoxFit.cover,
@@ -318,14 +325,14 @@ class CardWidget extends StatelessWidget {
       childWhenDragging: Opacity(
         opacity: 0.5,
         child: Image.asset(
-          assetName,
+          card.path,
           width: 80,
           height: 120,
           fit: BoxFit.cover,
         ),
       ),
       child: Image.asset(
-        assetName,
+        card.path,
         width: 80,
         height: 120,
         fit: BoxFit.cover,
