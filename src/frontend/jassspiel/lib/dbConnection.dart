@@ -189,6 +189,68 @@ class DbConnection {
     }
   }
 
+  Future<bool> isTrumpf(String cid) async {
+      final response = await client.from('card').select('istrumpf').eq('CID', cid).maybeSingle();
+      return response?['istrumpf'] as bool? ?? false;
+    }
+
+  Future<String> getCardType(String cid) async {
+      final response = await client.from('card').select('cardtype').eq('CID', cid).maybeSingle();
+      return response?['cardtype'] as String? ?? '';
+  }
+
+  Future<int> getCardValue(String cid) async {
+      if (await isTrumpf(cid)) {
+        switch (await getCardType(cid)) {
+          case 'ASS':
+        return 11;
+          case 'König':
+        return 4;
+          case 'Ober':
+        return 3; 
+          case 'Unter':
+        return 20;
+          case '10':
+        return 10; 
+          case '9':
+        return 14;
+          default:
+        return 0;
+        }
+      } else {
+        switch (await getCardType(cid)) {
+          case 'ASS':
+        return 11;
+          case 'König':
+        return 4;
+          case 'Ober':
+        return 3; 
+          case 'Unter':
+        return 2;
+          case '10':
+        return 10; 
+          default:
+        return 0;
+      }
+    }
+  }
+
+  Future<String> getWinningCard(List<Jasskarte> cards) async {
+    Jasskarte? winningCard;
+    for (var card in cards) {
+      if (winningCard == null || await getCardValue(card.cid) > await getCardValue(winningCard.cid)) {
+        winningCard = card;
+      }
+    }
+
+    final response = await client
+      .from('cardingames')  
+      .select('UID')
+      .eq('CID', winningCard != null ? winningCard.cid : '')
+      .maybeSingle();
+    return response?['UID'] as String? ?? '';
+  }
+
   Future<List<Spieler>> waitForFourPlayers(String gid) {
     final completer = Completer<List<Spieler>>();
     void checkPlayers() async {
