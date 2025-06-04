@@ -117,7 +117,7 @@ class _StartPageState extends State<StartPage> {
                       return;
                     }
                     await db.addPlayerToGame(code, uid, name);
-                    Navigator.pushNamed(context, '/init', arguments: {'gid': code});
+                    Navigator.pushNamed(context, '/init', arguments: {'gid': code, 'uid': uid});
                   },
                   child: const Text('Join Game'),
                 ),
