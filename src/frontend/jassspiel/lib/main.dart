@@ -7,6 +7,7 @@ import 'pages/start.dart';
 import 'package:logger/logger.dart';
 import 'logger.util.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Logger.level = Level.debug;

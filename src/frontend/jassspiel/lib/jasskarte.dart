@@ -1,5 +1,3 @@
-import 'package:uuid/uuid.dart';
-
 class Jasskarte {
   String symbol;
   String cardType;

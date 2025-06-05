@@ -17,25 +17,25 @@ class DbConnection {
     );
   }
 
-    Future<List<Jasskarte>> getAllCards() async {
-      print('GetAllCards Called');
-      final response = await client
-          .from('card')
-          .select('CID, symbol, cardtype');
-      List<Jasskarte> cards = [];
-      print('Response length: ${response.length}');
-      for (final item in response) {
-        final card = Jasskarte.wheninit(
-          item['symbol'],
-          item['CID'],
-          item['cardtype'],
-          'assets/${item['symbol']}/${item['symbol']}_${item['cardtype']}.png',
-        );
-        cards.add(card);
-        print('Card added: ${card.symbol}, ${card.cid}, ${card.cardType}');
-      }
-      return cards;
+  Future<List<Jasskarte>> getAllCards() async {
+    print('GetAllCards Called');
+    final response = await client
+        .from('card')
+        .select('CID, symbol, cardtype');
+    List<Jasskarte> cards = [];
+    print('Response length: ${response.length}');
+    for (final item in response) {
+      final card = Jasskarte.wheninit(
+        item['symbol'],
+        item['CID'],
+        item['cardtype'],
+        'assets/${item['symbol']}/${item['symbol']}_${item['cardtype']}.png',
+      );
+      cards.add(card);
+      print('Card added: ${card.symbol}, ${card.cid}, ${card.cardType}');
     }
+    return cards;
+  }
 
   Future<String> getOrCreateUid() async {
     final prefs = await SharedPreferences.getInstance();
@@ -89,7 +89,36 @@ class DbConnection {
     return false;
   }
 
-    Future<void> addPlayerToGame(String gid, String uid, String name) async {
+Future<List<Jasskarte>> getPlayedCards(String rid) async {
+  // Variante A: Sofern FOREIGN KEY korrekt eingerichtet ist
+  final response = await client
+      .from('plays')
+      .select('CID, card(symbol, cardtype)')
+      .eq('RID', rid);
+
+  print('DEBUG getPlayedCards raw response: $response');
+
+  List<Jasskarte> playedCards = [];
+  for (final item in response) {
+    final cardData = item['card'];
+    if (cardData == null) {
+      print('WARN getPlayedCards: Kein "card"-Feld in $item');
+      continue;
+    }
+    final card = Jasskarte.wheninit(
+      cardData['symbol'] as String,
+      item['CID'] as String,
+      cardData['cardtype'] as String,
+      'assets/${cardData['symbol']}/${cardData['symbol']}_${cardData['cardtype']}.png',
+    );
+    playedCards.add(card);
+  }
+  print('DEBUG getPlayedCards liefert ${playedCards.length} Karten zurück');
+  return playedCards;
+}
+
+
+  Future<void> addPlayerToGame(String gid, String uid, String name) async {
     // Stelle sicher, dass der User existiert
     await saveUserIfNeeded(uid, name);
 
@@ -108,7 +137,6 @@ class DbConnection {
 
     final numbers = result.map((e) => e['playernumber'] as int).toList();
     final number = (numbers.isEmpty ? 1 : (numbers.reduce(max) + 1));
-
 
     await client.from('usergame').insert({
       'GID': gid,
@@ -132,12 +160,11 @@ class DbConnection {
     }).toList();
   }
 
-
   Future<void> shuffleCards(List<Jasskarte> cards, List<Spieler> players, String gid) async {
     cards.shuffle();
     print('Shuffle Cards Called');
     for (var i = 0; i < players.length; i++) {
-    final hand = cards.sublist(i * 9, (i + 1) * 9);
+      final hand = cards.sublist(i * 9, (i + 1) * 9);
       for (final card in hand) {
         await client.from('cardingames').insert({
           'UID': players[i].uid,
@@ -147,6 +174,7 @@ class DbConnection {
       }
     }
   }
+
   Future<List<Jasskarte>> getUrCards(String gid, String uid) async {
     print('GID: $gid, UID: $uid');
     final response = await client
@@ -167,6 +195,7 @@ class DbConnection {
     }
     return cards;
   }
+
   Future<void> addPlayInRound(String rid, String uid, String cid) async {
     await client.from('plays').insert({
       'RID': rid,
@@ -174,6 +203,7 @@ class DbConnection {
       'CID': cid,
     });
   }
+
   Future<String> GetRoundID(String gid) async {
     final response = await client
         .from('rounds')
@@ -190,47 +220,47 @@ class DbConnection {
   }
 
   Future<bool> isTrumpf(String cid) async {
-      final response = await client.from('card').select('istrumpf').eq('CID', cid).maybeSingle();
-      return response?['istrumpf'] as bool? ?? false;
-    }
+    final response = await client.from('card').select('istrumpf').eq('CID', cid).maybeSingle();
+    return response?['istrumpf'] as bool? ?? false;
+  }
 
   Future<String> getCardType(String cid) async {
-      final response = await client.from('card').select('cardtype').eq('CID', cid).maybeSingle();
-      return response?['cardtype'] as String? ?? '';
+    final response = await client.from('card').select('cardtype').eq('CID', cid).maybeSingle();
+    return response?['cardtype'] as String? ?? '';
   }
 
   Future<int> getCardValue(String cid) async {
-      if (await isTrumpf(cid)) {
-        switch (await getCardType(cid)) {
-          case 'ASS':
-        return 11;
-          case 'König':
-        return 4;
-          case 'Ober':
-        return 3; 
-          case 'Unter':
-        return 20;
-          case '10':
-        return 10; 
-          case '9':
-        return 14;
-          default:
-        return 0;
-        }
-      } else {
-        switch (await getCardType(cid)) {
-          case 'ASS':
-        return 11;
-          case 'König':
-        return 4;
-          case 'Ober':
-        return 3; 
-          case 'Unter':
-        return 2;
-          case '10':
-        return 10; 
-          default:
-        return 0;
+    if (await isTrumpf(cid)) {
+      switch (await getCardType(cid)) {
+        case 'ASS':
+          return 11;
+        case 'König':
+          return 4;
+        case 'Ober':
+          return 3;
+        case 'Unter':
+          return 20;
+        case '10':
+          return 10;
+        case '9':
+          return 14;
+        default:
+          return 0;
+      }
+    } else {
+      switch (await getCardType(cid)) {
+        case 'ASS':
+          return 11;
+        case 'König':
+          return 4;
+        case 'Ober':
+          return 3;
+        case 'Unter':
+          return 2;
+        case '10':
+          return 10;
+        default:
+          return 0;
       }
     }
   }
@@ -244,10 +274,10 @@ class DbConnection {
     }
 
     final response = await client
-      .from('cardingames')  
-      .select('UID')
-      .eq('CID', winningCard != null ? winningCard.cid : '')
-      .maybeSingle();
+        .from('cardingames')
+        .select('UID')
+        .eq('CID', winningCard != null ? winningCard.cid : '')
+        .maybeSingle();
     return response?['UID'] as String? ?? '';
   }
 
@@ -282,25 +312,27 @@ class DbConnection {
     final resp = await client.from('games').select('GID').eq('GID', code).maybeSingle();
     return resp == null;
   }
+
   Future<void> startNewRound(String gid, int whichround) async {
     await client.from('rounds').insert({
       'GID': gid,
       'whichround': whichround + 1,
     });
   }
-Future<int> getWhichRound(String gid) async {
-  final response = await client
-      .from('rounds')
-      .select('whichround')
-      .eq('GID', gid)
-      .order('whichround', ascending: false) 
-      .limit(1)
-      .maybeSingle();
 
-  if (response != null) {
-    return response['whichround'] as int;
-  } else {
-    return -1; 
+  Future<int> getWhichRound(String gid) async {
+    final response = await client
+        .from('rounds')
+        .select('whichround')
+        .eq('GID', gid)
+        .order('whichround', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    if (response != null) {
+      return response['whichround'] as int;
+    } else {
+      return -1;
+    }
   }
-}
 }
