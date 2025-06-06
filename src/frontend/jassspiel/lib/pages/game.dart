@@ -138,15 +138,13 @@ void initState() {
 void _initializeGame() async {
   DbConnection con = DbConnection();
   List<Spieler> players = await con.loadPlayers(widget.gid);
-  List<Jasskarte> loadedCards = [];
-  while (loadedCards.isEmpty) {
-    loadedCards = await gameLogic.shuffleandgetCards(players, widget.uid);
-    if (loadedCards.isEmpty) {
-      await Future.delayed(const Duration(seconds: 2));
-    }
+  List<Jasskarte> cards = [];
+  while (cards.isEmpty) {
+    cards = await gameLogic.shuffleandgetCards(players, widget.uid);
+    await Future.delayed(const Duration(seconds: 1)); // kleine Pause
   }
   gameLogic.startNewRound(widget.uid);
-  setState(() {playerCards = loadedCards;}); // damit das UI aktualisiert wird
+  setState(() {playerCards = Future.value(cards);}); // damit das UI aktualisiert wird
 }
 
 
