@@ -336,7 +336,7 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     }
   }
   void updateWhosTurn(String rid, String uid) async {
-    await client.from('rounds').update({'whosturn': uid}).eq('RID', rid);
+    await client.from('rounds').update({'whoIsAtTurn': uid}).eq('RID', rid);
   }
 
   Future<String> getWhosTurn(String rid) async {
