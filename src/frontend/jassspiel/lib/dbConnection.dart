@@ -359,8 +359,8 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       .eq('UID', uid)
       .eq('GID', gid)
       .maybeSingle();
-    if(response != null && response['playernumber']){
-      return response['playernumber'] as int;
+  	if (response != null && response['playernumber'] != null) {
+      return response['playernumber'];
     }
     else{ throw Exception('Error');}
   }

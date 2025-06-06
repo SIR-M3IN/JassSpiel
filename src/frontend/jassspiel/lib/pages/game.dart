@@ -140,6 +140,14 @@ void _initializeGame() async {
   List<Spieler> players = await con.loadPlayers(widget.gid);
   Future<List<Jasskarte>> loadedCards = gameLogic.shuffleandgetCards(players, widget.uid);
   gameLogic.startNewRound(widget.uid);
+  String roundId = await db.GetRoundID(widget.gid);
+  String whosturn = await db.getWhosTurn(roundId);
+  if (whosturn != widget.uid) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Es ist nicht dein Zug!')),
+    );
+    return;
+  }
   setState(() {playerCards = loadedCards;}); // damit das UI aktualisiert wird
 }
 
@@ -232,10 +240,6 @@ void _initializeGame() async {
                     child: FutureBuilder<List<Jasskarte>>(
                     future: playerCards,
                     builder: (context, snapshot) {
-                      print('Snapshot state: ${snapshot.connectionState}');
-                      print('Snapshot error: ${snapshot.error}');
-                      print('Snapshot data: ${snapshot.data}');
-
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
