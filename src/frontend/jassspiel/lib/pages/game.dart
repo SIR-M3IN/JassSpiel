@@ -138,16 +138,14 @@ void initState() {
 void _initializeGame() async {
   DbConnection con = DbConnection();
   List<Spieler> players = await con.loadPlayers(widget.gid);
-  Future<List<Jasskarte>> loadedCards = gameLogic.shuffleandgetCards(players, widget.uid);
-  gameLogic.startNewRound(widget.uid);
-  String roundId = await db.GetRoundID(widget.gid);
-  String whosturn = await db.getWhosTurn(roundId);
-  if (whosturn != widget.uid) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Es ist nicht dein Zug!')),
-    );
-    return;
+  List<Jasskarte> loadedCards = [];
+  while (loadedCards.isEmpty) {
+    loadedCards = await gameLogic.shuffleandgetCards(players, widget.uid);
+    if (loadedCards.isEmpty) {
+      await Future.delayed(const Duration(seconds: 2));
+    }
   }
+  gameLogic.startNewRound(widget.uid);
   setState(() {playerCards = loadedCards;}); // damit das UI aktualisiert wird
 }
 
