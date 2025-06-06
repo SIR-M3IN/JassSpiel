@@ -303,4 +303,46 @@ Future<int> getWhichRound(String gid) async {
     return -1; 
   }
 }
+  void updateWhosTurn(String rid, String uid) async {
+    await client.from('rounds').update({'whosturn': uid}).eq('RID', rid);
+  }
+
+  Future<String> getWhosTurn(String rid) async {
+    final response = await client
+      .from('rounds')
+      .select('whoIsAtTurn')
+      .eq('RID', rid)
+      .order('whichround', ascending: false)
+      .limit(1)
+      .maybeSingle();
+    if (response != null && response['whoIsAtTurn'] != null) {
+      return response['whoIsAtTurn'] as String;
+    }
+    return '';
+  }
+  Future<int> getUrPlayernumber(String uid, String gid) async {
+    final response = await client
+      .from('usergame')
+      .select('playernumber')
+      .eq('UID', uid)
+      .eq('GID', gid)
+      .maybeSingle();
+    if(response != null && response['playernumber']){
+      return response['playernumber'] as int;
+    }
+    else{ throw Exception('Error');}
+  }
+  Future<String> getNextUserUid(String gid, int playernumber) async{
+    final response = await client
+      .from('usergame')
+      .select('UID')
+      .eq('GID', gid)
+      .eq('playernumber', playernumber)
+      .maybeSingle();
+      if(response != null && response['UID']){
+        return response['UID'];
+      }
+      else {throw Exception('Error in getNextUserUid gid: $gid playernumber $playernumber');}
+  }
 }
+

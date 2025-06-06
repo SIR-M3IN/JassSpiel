@@ -180,9 +180,19 @@ void _initializeGame() async {
                 child: 
                 DragTarget<Jasskarte>(
                   onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
-                    _addPlayedCard(details.data);
                     String roundId = await db.GetRoundID(widget.gid);
+                    String whosturn = await db.getWhosTurn(roundId);
+                    if (whosturn != widget.uid) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Es ist nicht dein Zug!')),
+                      );
+                      return;
+                    }
+                    _addPlayedCard(details.data);
                     db.addPlayInRound(roundId, widget.uid, details.data.cid);
+                    int urplayernumber = await db.getUrPlayernumber(widget.uid, widget.gid);
+                    String nextplayer = await db.getNextUserUid(widget.gid, urplayernumber+1);
+                    db.updateWhosTurn(roundId, nextplayer);
                     counter++;
                     if (counter == 4) {
                       counter = 0;
