@@ -360,6 +360,7 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       .eq('GID', gid)
       .maybeSingle();
   	if (response != null && response['playernumber'] != null) {
+      print('Player number for UID $uid in GID $gid: ${response['playernumber']}');
       return response['playernumber'];
     }
     else{ throw Exception('Error');}
@@ -371,7 +372,7 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       .eq('GID', gid)
       .eq('playernumber', playernumber)
       .maybeSingle();
-      if(response != null && response['UID']){
+      if(response != null && response['UID'] != null) {
         return response['UID'];
       }
       else {throw Exception('Error in getNextUserUid gid: $gid playernumber $playernumber');}
