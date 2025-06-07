@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,6 +36,23 @@ class DbConnection {
       print('Card added: ${card.symbol}, ${card.cid}, ${card.cardType}');
     }
     return cards;
+  }
+  Future<Jasskarte> getCardByCid(String cid) async {
+    final response = await client
+        .from('card')
+        .select('CID, symbol, cardtype')
+        .eq('CID', cid)
+        .maybeSingle();
+    if (response != null) {
+      return Jasskarte.wheninit(
+        response['symbol'],
+        response['CID'],
+        response['cardtype'],
+        'assets/${response['symbol']}/${response['symbol']}_${response['cardtype']}.png',
+      );
+    } else {
+      throw Exception('Card with CID $cid not found');
+    }
   }
 
   Future<String> getOrCreateUid() async {
@@ -215,7 +233,7 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     if (response != null) {
       return response['RID'];
     } else {
-      throw Exception('No round found for GID: $gid');
+      return '';
     }
   }
 
@@ -301,6 +319,35 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
 
     return completer.future;
   }
+RealtimeChannel? _playsChannel;
+final ValueNotifier<String?> neueKarte = ValueNotifier(null);
+Future<void> subscribeToPlayedCards(String currentRid) async{
+  if (currentRid.isEmpty) return;
+  if (_playsChannel != null) {
+    print("Have been here");
+    await _playsChannel!.unsubscribe();
+    print("Unsubscribed from previous channel");
+  }
+  _playsChannel = client
+      .channel('public:plays:RID=eq.$currentRid')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.insert,
+        schema: 'public',
+        table: 'plays',
+        callback: (payload) {
+          final newCid = payload.newRecord?['CID'];
+          if (newCid != null) {
+            neueKarte.value = newCid;
+          }
+        },
+      )
+      .subscribe();
+
+  currentRid = currentRid;
+}
+
+
+
 
   String _generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

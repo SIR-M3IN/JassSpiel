@@ -108,9 +108,9 @@ class _GameScreenState extends State<GameScreen> {
   DbConnection db = DbConnection();
   late GameLogic gameLogic;
   int counter = 0;
+  String currentRoundid = '';
   List<Jasskarte> playedCards = [];
   late Future<List<Jasskarte>> playerCards = Future.value([]);
-  
 
 void _addPlayedCard(Jasskarte card) {
   setState(() {
@@ -124,8 +124,22 @@ void _addPlayedCard(Jasskarte card) {
     });
   });
 }
+// KI: Hilfe mir die Karten bei allen spielern anzuzeigen
+  void _handleNewCardFromListener() async {
+  final cardCid = db.neueKarte.value;
+  if (cardCid != null) {
+    if (playedCards.any((existingCard) => existingCard.cid == cardCid)) {
+        return; 
+    }
+    Jasskarte newCard = await db.getCardByCid(cardCid);
+    if (!mounted) return;
 
+    setState(() {
+      playedCards.add(newCard);
+    });
+  }
 
+  }
   
 
 @override
@@ -133,18 +147,30 @@ void initState() {
   super.initState();
   gameLogic = GameLogic(widget.gid);
   _initializeGame();
+  db.neueKarte.addListener(_handleNewCardFromListener);
+
 }
 
 void _initializeGame() async {
-  DbConnection con = DbConnection();
-  List<Spieler> players = await con.loadPlayers(widget.gid);
-  List<Jasskarte> cards = [];
-  while (cards.isEmpty) {
-    cards = await gameLogic.shuffleandgetCards(players, widget.uid);
-    await Future.delayed(const Duration(seconds: 1)); // kleine Pause
+  List<Spieler> players = await db.loadPlayers(widget.gid);
+  String currentRoundid = await db.GetRoundID(widget.gid);
+  if (currentRoundid.isEmpty) {
+    await gameLogic.startNewRound(widget.uid);
+    currentRoundid = await db.GetRoundID(widget.gid); 
   }
-  gameLogic.startNewRound(widget.uid);
-  setState(() {playerCards = Future.value(cards);}); // damit das UI aktualisiert wird
+  db.subscribeToPlayedCards(currentRoundid);
+  List<Jasskarte> cards = [];
+  while (cards.length < 9) {
+    cards = await gameLogic.shuffleandgetCards(players, widget.uid);
+  }
+  for (var card in cards) {
+    if (card.symbol == 'Schella' && card.cardType == '6'){
+        await gameLogic.startNewRound(widget.uid);
+        String roundId = await db.GetRoundID(widget.gid);
+        db.updateWhosTurn(roundId, widget.uid);
+    }
+  }
+  setState(() {playerCards = Future.value(cards);});
 }
 
 
@@ -184,7 +210,19 @@ void _initializeGame() async {
                 child: 
                 DragTarget<Jasskarte>(
                   onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
-                    String roundId = await db.GetRoundID(widget.gid);
+              String roundId = '';
+                int tries = 0;
+
+                // Maximal 10 Versuche (z. B. über 5 Sekunden)
+                while ((roundId.isEmpty) && tries < 10) {
+                  roundId = await db.GetRoundID(widget.gid);
+                  if (roundId.isNotEmpty) {
+                    break;
+                  }
+
+                  await Future.delayed(const Duration(milliseconds: 50));
+                  tries++;
+                }
                     String whosturn = await db.getWhosTurn(roundId);
                     if (whosturn != widget.uid) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -193,14 +231,18 @@ void _initializeGame() async {
                       return;
                     }
                     _addPlayedCard(details.data);
-                    db.addPlayInRound(roundId, widget.uid, details.data.cid);
                     int urplayernumber = await db.getUrPlayernumber(widget.uid, widget.gid);
+                    if (urplayernumber == 4) {
+                      urplayernumber = 0;
+                    }
                     String nextplayer = await db.getNextUserUid(widget.gid, urplayernumber+1);
                     db.updateWhosTurn(roundId, nextplayer);
+                    db.addPlayInRound(roundId, widget.uid, details.data.cid);
                     counter++;
                     if (counter == 4) {
                       counter = 0;
                       gameLogic.startNewRound(widget.uid);
+                      
                     }
                   },
                   builder: (context, candidateData, rejectedData) {
@@ -363,4 +405,7 @@ class CardWidget extends StatelessWidget {
       ),
     );
   }
+  
+  
 }
+
