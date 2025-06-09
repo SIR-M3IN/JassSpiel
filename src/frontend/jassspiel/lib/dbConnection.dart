@@ -298,6 +298,10 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
         .maybeSingle();
     return response?['UID'] as String? ?? '';
   }
+  Future<void> updateWinnerDB(String uid, String rid) async{
+    await client.from('rounds').update({'winnerid': uid}).eq('RID', rid);
+  }
+
 
   Future<List<Spieler>> waitForFourPlayers(String gid) {
     final completer = Completer<List<Spieler>>();

@@ -124,10 +124,12 @@ void _addPlayedCard(Jasskarte card) {
     });
   });
 }
-// KI: Hilfe mir die Karten bei allen spielern anzuzeigen
+// KI: Hilf mir die Karten bei allen Spielern anzuzeigen
   void _handleNewCardFromListener() async {
+
   final cardCid = db.neueKarte.value;
   if (cardCid != null) {
+
     if (playedCards.any((existingCard) => existingCard.cid == cardCid)) {
         return; 
     }
@@ -137,6 +139,14 @@ void _addPlayedCard(Jasskarte card) {
     setState(() {
       playedCards.add(newCard);
     });
+    
+    if (playedCards.length == 4) {
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      setState(() {
+        playedCards = [];
+      });
+    }
   }
 
   }
@@ -210,19 +220,8 @@ void _initializeGame() async {
                 child: 
                 DragTarget<Jasskarte>(
                   onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
-              String roundId = '';
-                int tries = 0;
-
-                // Maximal 10 Versuche (z. B. über 5 Sekunden)
-                while ((roundId.isEmpty) && tries < 10) {
+                  String roundId = '';
                   roundId = await db.GetRoundID(widget.gid);
-                  if (roundId.isNotEmpty) {
-                    break;
-                  }
-
-                  await Future.delayed(const Duration(milliseconds: 50));
-                  tries++;
-                }
                     String whosturn = await db.getWhosTurn(roundId);
                     if (whosturn != widget.uid) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -242,6 +241,8 @@ void _initializeGame() async {
                     if (counter == 4) {
                       counter = 0;
                       gameLogic.startNewRound(widget.uid);
+                      String winner = await db.getWinningCard(playedCards);
+                      db.updateWinnerDB(winner, roundId);
                       
                     }
                   },
