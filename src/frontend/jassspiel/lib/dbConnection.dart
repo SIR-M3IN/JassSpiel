@@ -19,12 +19,10 @@ class DbConnection {
   }
 
   Future<List<Jasskarte>> getAllCards() async {
-    print('GetAllCards Called');
     final response = await client
         .from('card')
         .select('CID, symbol, cardtype');
     List<Jasskarte> cards = [];
-    print('Response length: ${response.length}');
     for (final item in response) {
       final card = Jasskarte.wheninit(
         item['symbol'],
@@ -33,7 +31,6 @@ class DbConnection {
         'assets/${item['symbol']}/${item['symbol']}_${item['cardtype']}.png',
       );
       cards.add(card);
-      print('Card added: ${card.symbol}, ${card.cid}, ${card.cardType}');
     }
     return cards;
   }
@@ -194,7 +191,6 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
   }
 
   Future<List<Jasskarte>> getUrCards(String gid, String uid) async {
-    print('GID: $gid, UID: $uid');
     final response = await client
         .from('cardingames')
         .select('CID, card(symbol, cardtype)')
@@ -236,19 +232,25 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       return '';
     }
   }
-
-  Future<bool> isTrumpf(String cid) async {
-    final response = await client.from('card').select('istrumpf').eq('CID', cid).maybeSingle();
-    return response?['istrumpf'] as bool? ?? false;
+  Future<bool> isTrumpf(String cid, String gid) async {
+    final response = await client
+        .from('cardingames')
+        .select('isTrumpf')
+        .eq('CID', cid)
+        .eq('GID', gid)
+        .maybeSingle();
+    print('DEBUG isTrumpf response: $response');
+    return response?['isTrumpf'] as bool? ?? false;
   }
 
   Future<String> getCardType(String cid) async {
     final response = await client.from('card').select('cardtype').eq('CID', cid).maybeSingle();
+    print('DEBUG getCardType response: $response');
     return response?['cardtype'] as String? ?? '';
   }
 
-  Future<int> getCardValue(String cid) async {
-    if (await isTrumpf(cid)) {
+  Future<int> getCardValue(String cid, String gid) async {
+    if (await isTrumpf(cid, gid)) {
       switch (await getCardType(cid)) {
         case 'ASS':
           return 11;
@@ -283,10 +285,10 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     }
   }
 
-  Future<String> getWinningCard(List<Jasskarte> cards) async {
+  Future<String> getWinningCard(List<Jasskarte> cards, String gid) async {
     Jasskarte? winningCard;
     for (var card in cards) {
-      if (winningCard == null || await getCardValue(card.cid) > await getCardValue(winningCard.cid)) {
+      if (winningCard == null || await getCardValue(card.cid, gid) > await getCardValue(winningCard.cid, gid)) {
         winningCard = card;
       }
     }
@@ -295,6 +297,7 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
         .from('cardingames')
         .select('UID')
         .eq('CID', winningCard != null ? winningCard.cid : '')
+        .eq('GID', gid)
         .maybeSingle();
     return response?['UID'] as String? ?? '';
   }
@@ -328,9 +331,7 @@ final ValueNotifier<String?> neueKarte = ValueNotifier(null);
 Future<void> subscribeToPlayedCards(String currentRid) async{
   if (currentRid.isEmpty) return;
   if (_playsChannel != null) {
-    print("Have been here");
     await _playsChannel!.unsubscribe();
-    print("Unsubscribed from previous channel");
   }
   _playsChannel = client
       .channel('public:plays:RID=eq.$currentRid')
@@ -411,7 +412,6 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       .eq('GID', gid)
       .maybeSingle();
   	if (response != null && response['playernumber'] != null) {
-      print('Player number for UID $uid in GID $gid: ${response['playernumber']}');
       return response['playernumber'];
     }
     else{ throw Exception('Error');}

@@ -126,7 +126,7 @@ void _addPlayedCard(Jasskarte card) {
 }
 // KI: Hilf mir die Karten bei allen Spielern anzuzeigen
   void _handleNewCardFromListener() async {
-
+  print("Neue Karte empfangen");
   final cardCid = db.neueKarte.value;
   if (cardCid != null) {
 
@@ -166,7 +166,14 @@ void _initializeGame() async {
   String currentRoundid = await db.GetRoundID(widget.gid);
   if (currentRoundid.isEmpty) {
     await gameLogic.startNewRound(widget.uid);
-    currentRoundid = await db.GetRoundID(widget.gid); 
+    print('gid: ${widget.gid}');
+    while (currentRoundid.isEmpty) {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+    currentRoundid = await db.GetRoundID(widget.gid);
+    }
+     
+    print('currentRoundid: $currentRoundid');
   }
   db.subscribeToPlayedCards(currentRoundid);
   List<Jasskarte> cards = [];
@@ -238,12 +245,11 @@ void _initializeGame() async {
                     db.updateWhosTurn(roundId, nextplayer);
                     db.addPlayInRound(roundId, widget.uid, details.data.cid);
                     counter++;
-                    if (counter == 4) {
-                      counter = 0;
+                    if (playedCards.length == 4) {
                       gameLogic.startNewRound(widget.uid);
-                      String winner = await db.getWinningCard(playedCards);
+                      String winner = await db.getWinningCard(playedCards, widget.gid);
                       db.updateWinnerDB(winner, roundId);
-                      
+                      playedCards = [];
                     }
                   },
                   builder: (context, candidateData, rejectedData) {
@@ -284,7 +290,7 @@ void _initializeGame() async {
                       } else if (snapshot.hasError) {
                         return Center(child: Text('Fehler: ${snapshot.error}'));
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('Keine Karten gefunden'));
+                        return const Center(child: Text('Lade Karten...'));
                       } else {
                         return CardHand(cards: snapshot.data!);
                       }
