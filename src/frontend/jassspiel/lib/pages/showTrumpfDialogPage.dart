@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 
 Future<String?> showTrumpfDialog(BuildContext context) {
-  String? _selectedTrumpf; // speichert, was gerade ausgewählt ist
+  String? selectedTrumpf; // speichert, was gerade ausgewählt ist
 
   return showDialog<String>(
     context: context,
@@ -19,70 +19,70 @@ Future<String?> showTrumpfDialog(BuildContext context) {
                   RadioListTile<String>(
                     title: const Text('Herz'),
                     value: 'Herz',
-                    groupValue: _selectedTrumpf,
+                    groupValue: selectedTrumpf,
                     onChanged: (value) {
                       setState(() {
-                        _selectedTrumpf = value;
+                        selectedTrumpf = value;
                       });
                     },
                   ),
                   RadioListTile<String>(
                     title: const Text('Laub'),
                     value: 'Laub',
-                    groupValue: _selectedTrumpf,
+                    groupValue: selectedTrumpf,
                     onChanged: (value) {
                       setState(() {
-                        _selectedTrumpf = value;
+                        selectedTrumpf = value;
                       });
                     },
                   ),
                   RadioListTile<String>(
                     title: const Text('Schella'),
                     value: 'Schella',
-                    groupValue: _selectedTrumpf,
+                    groupValue: selectedTrumpf,
                     onChanged: (value) {
                       setState(() {
-                        _selectedTrumpf = value;
+                        selectedTrumpf = value;
                       });
                     },
                   ),
                   RadioListTile<String>(
                     title: const Text('Eichel'),
                     value: 'Eichel',
-                    groupValue: _selectedTrumpf,
+                    groupValue: selectedTrumpf,
                     onChanged: (value) {
                       setState(() {
-                        _selectedTrumpf = value;
+                        selectedTrumpf = value;
                       });
                     },
                   ),
                   RadioListTile<String>(
                     title: const Text('Von Oben'),
                     value: 'Von Oben',
-                    groupValue: _selectedTrumpf,
+                    groupValue: selectedTrumpf,
                     onChanged: (value) {
                       setState(() {
-                        _selectedTrumpf = value;
+                        selectedTrumpf = value;
                       });
                     },
                   ),
                   RadioListTile<String>(
                     title: const Text('Von Unten'),
                     value: 'Von Unten',
-                    groupValue: _selectedTrumpf,
+                    groupValue: selectedTrumpf,
                     onChanged: (value) {
                       setState(() {
-                        _selectedTrumpf = value;
+                        selectedTrumpf = value;
                       });
                     },
                   ),
                   RadioListTile<String>(
                     title: const Text('Slalom'),
                     value: 'Slalom',
-                    groupValue: _selectedTrumpf,
+                    groupValue: selectedTrumpf,
                     onChanged: (value) {
                       setState(() {
-                        _selectedTrumpf = value;
+                        selectedTrumpf = value;
                       });
                     },
                   ),
@@ -99,9 +99,9 @@ Future<String?> showTrumpfDialog(BuildContext context) {
               ),
               // Button „Bestätigen“ gibt den gewählten Trumpf zurück, wenn einer ausgewählt wurde
               TextButton(
-                onPressed: _selectedTrumpf != null
+                onPressed: selectedTrumpf != null
                     ? () {
-                        Navigator.of(context).pop(_selectedTrumpf);
+                        Navigator.of(context).pop(selectedTrumpf);
                       }
                     : null, // ist nichts gewählt, ist der Button deaktiviert
                 child: const Text('Bestätigen'),

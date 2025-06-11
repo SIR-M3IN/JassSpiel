@@ -340,7 +340,7 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         schema: 'public',
         table: 'plays',
         callback: (payload) {
-          final newCid = payload.newRecord?['CID'];
+          final newCid = payload.newRecord['CID'];
           if (newCid != null) {
             neueKarte.value = newCid;
           }

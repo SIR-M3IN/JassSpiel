@@ -99,7 +99,7 @@ class CardGameApp extends StatelessWidget {
 class GameScreen extends StatefulWidget {
   final String gid;
   final String uid;
-  GameScreen({required this.gid, required this.uid, super.key});
+  const GameScreen({required this.gid, required this.uid, super.key});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
