@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:jassspiel/DBConnection.dart';
+import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/gamelogic.dart';
 import '../spieler.dart';
 import '../jasskarte.dart';
+import 'package:jassspiel/pages/showTrumpfDialogPage.dart';
 
 void main() {
   runApp(const CardGameApp());
@@ -179,12 +180,17 @@ void _initializeGame() async {
   List<Jasskarte> cards = [];
   while (cards.length < 9) {
     cards = await gameLogic.shuffleandgetCards(players, widget.uid);
-  }
-  for (var card in cards) {
-    if (card.symbol == 'Schella' && card.cardType == '6'){
-        await gameLogic.startNewRound(widget.uid);
-        String roundId = await db.GetRoundID(widget.gid);
-        db.updateWhosTurn(roundId, widget.uid);
+  }  for (var card in cards) {
+    if (card.symbol == 'Schella' && card.cardType == '6') {
+      await gameLogic.startNewRound(widget.uid);
+      
+      String roundId = await db.GetRoundID(widget.gid);
+      db.updateWhosTurn(roundId, widget.uid);
+
+      String? selectedTrumpf = await showTrumpfDialog(context);
+      if (selectedTrumpf != null) {
+        await db.updateTrumpf(widget.gid, selectedTrumpf);
+      }
     }
   }
   setState(() {playerCards = Future.value(cards);});

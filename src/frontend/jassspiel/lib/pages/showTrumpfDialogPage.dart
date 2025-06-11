@@ -56,54 +56,45 @@ Future<String?> showTrumpfDialog(BuildContext context) {
                       });
                     },
                   ),
-                  RadioListTile<String>(
-                    title: const Text('Von Oben'),
-                    value: 'Von Oben',
-                    groupValue: selectedTrumpf,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedTrumpf = value;
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Von Unten'),
-                    value: 'Von Unten',
-                    groupValue: selectedTrumpf,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedTrumpf = value;
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Slalom'),
-                    value: 'Slalom',
-                    groupValue: selectedTrumpf,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedTrumpf = value;
-                      });
-                    },
-                  ),
+                  // RadioListTile<String>(
+                  //   title: const Text('Von Oben'),
+                  //   value: 'Von Oben',
+                  //   groupValue: selectedTrumpf,
+                  //   onChanged: (value) {
+                  //     setState(() {
+                  //       selectedTrumpf = value;
+                  //     });
+                  //   },
+                  // ),
+                  // RadioListTile<String>(
+                  //   title: const Text('Von Unten'),
+                  //   value: 'Von Unten',
+                  //   groupValue: selectedTrumpf,
+                  //   onChanged: (value) {
+                  //     setState(() {
+                  //       selectedTrumpf = value;
+                  //     });
+                  //   },
+                  // ),
+                  // RadioListTile<String>(
+                  //   title: const Text('Slalom'),
+                  //   value: 'Slalom',
+                  //   groupValue: selectedTrumpf,
+                  //   onChanged: (value) {
+                  //     setState(() {
+                  //       selectedTrumpf = value;
+                  //     });
+                  //   },
+                  // ),
                 ],
               ),
-            ),
-            actions: [
-              // Button „Schiaba“ fungiert hier als „Abbrechen / kein Trumpf“
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop('Schiaba');
-                },
-                child: const Text('Schiaba'),
-              ),
-              // Button „Bestätigen“ gibt den gewählten Trumpf zurück, wenn einer ausgewählt wurde
+            ),            actions: [
               TextButton(
                 onPressed: selectedTrumpf != null
                     ? () {
                         Navigator.of(context).pop(selectedTrumpf);
                       }
-                    : null, // ist nichts gewählt, ist der Button deaktiviert
+                    : null,
                 child: const Text('Bestätigen'),
               ),
             ],

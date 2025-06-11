@@ -427,6 +427,25 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         return response['UID'];
       }
       else {throw Exception('Error in getNextUserUid gid: $gid playernumber $playernumber');}
+  }  
+  
+  Future<void> updateTrumpf(String gid, String trumpf) async {
+    final cardResponse = await client
+        .from('card')
+        .select('CID')
+        .eq('symbol', trumpf);
+    
+    List<String> trumpfCardIds = cardResponse.map<String>((item) => item['CID'] as String).toList();
+    
+    if (trumpfCardIds.isNotEmpty) {
+      for (String cardId in trumpfCardIds) {
+        await client.from('cardingames')
+            .update({'isTrumpf': true})
+            .eq('GID', gid)
+            .eq('CID', cardId);
+      }
+      print('DEBUG: ${trumpfCardIds.length} Karten von $trumpf für GID $gid auf true gesetzt');
+    }
   }
 }
 
