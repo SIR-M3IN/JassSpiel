@@ -152,18 +152,36 @@ class _StartPageState extends State<StartPage> {
                               offset: const Offset(0, 5),
                             ),
                           ],
-                        ),
-                        child: Column(
+                        ),                        child: Column(
                           children: [
-                            const Text(
-                              '🎮 Available Rooms',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  '🎮 Available Rooms',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _openGamesFuture = _fetchOpenGames();
+                                    });
+                                  },
+                                  icon: const Icon(Icons.refresh, color: Colors.white),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.white.withOpacity(0.2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: spacing),                      FutureBuilder<List<Map<String, dynamic>>>(
+                            SizedBox(height: spacing),FutureBuilder<List<Map<String, dynamic>>>(
                         future: _openGamesFuture,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState != ConnectionState.done) {
