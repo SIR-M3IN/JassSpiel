@@ -533,5 +533,14 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
     print('DEBUG: First card cleared for round $rid');
   }
+
+  Future<List<Map<String, dynamic>>> getOpenGames() async {
+    final response = await client
+        .from('games')
+        .select('GID, room_name, participants')
+        .eq('status', 'waiting')
+        .lt('participants', 4);
+    return List<Map<String, dynamic>>.from(response as List);
+  }
 }
 

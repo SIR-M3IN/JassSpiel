@@ -57,12 +57,12 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
-
   assets:
     - assets/Laub/
     - assets/Herz/
     - assets/Eichel/
     - assets/Schella/
+    - assets/other/
     - assets/Random_Names/random_double_names.json
 
 
