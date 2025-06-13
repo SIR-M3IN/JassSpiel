@@ -125,10 +125,43 @@ void _addPlayedCard(Jasskarte card) {
     });
   });
 }
+
+Future<bool> _isCardAllowed(Jasskarte card, String roundId) async {
+  String? firstCardCid = await db.getFirstCardInRound(roundId);
+  
+  if (firstCardCid == null) {
+    return true;
+  }
+  
+  Jasskarte? firstCard = await db.getFirstCardInRoundAsCard(roundId);
+  if (firstCard == null) {
+    return true; 
+  }
+  
+  bool isCardTrumpf = await db.isTrumpf(card.cid, widget.gid);
+  if (isCardTrumpf) {
+    return true;
+  }
+  
+  List<Jasskarte> myCards = await db.getUrCards(widget.gid, widget.uid);
+  
+  bool hasSameSuit = myCards.any((k) => k.symbol == firstCard.symbol);
+  
+  if (hasSameSuit) {
+    return card.symbol == firstCard.symbol;
+  }
+  return true;
+}
+
+void _updateCardStates() {
+  setState(() {
+  });
+}
+
 // KI: Hilf mir die Karten bei allen Spielern anzuzeigen
-  void _handleNewCardFromListener() async {
-  print("Neue Karte empfangen");
-  final cardCid = db.neueKarte.value;
+void _handleNewCardFromListener() async {
+  print("New card received");
+  final cardCid = db.newCard.value;
   if (cardCid != null) {
 
     if (playedCards.any((existingCard) => existingCard.cid == cardCid)) {
@@ -141,12 +174,18 @@ void _addPlayedCard(Jasskarte card) {
       playedCards.add(newCard);
     });
     
-    if (playedCards.length == 4) {
+    _updateCardStates();
+      if (playedCards.length == 4) {
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
+      
+      String currentRoundId = await db.GetRoundID(widget.gid);
+      db.clearFirstCardForRound(currentRoundId);
+      
       setState(() {
         playedCards = [];
       });
+      _updateCardStates();
     }
   }
 
@@ -158,7 +197,7 @@ void initState() {
   super.initState();
   gameLogic = GameLogic(widget.gid);
   _initializeGame();
-  db.neueKarte.addListener(_handleNewCardFromListener);
+  db.newCard.addListener(_handleNewCardFromListener);
 
 }
 
@@ -228,10 +267,8 @@ void _initializeGame() async {
                   child: playerAvatar('Player 3'),
                 ),
 
-                // Zentrale Spielfläche
               Center(
-                child: 
-                DragTarget<Jasskarte>(
+                child:                DragTarget<Jasskarte>(
                   onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
                   String roundId = '';
                   roundId = await db.GetRoundID(widget.gid);
@@ -242,7 +279,18 @@ void _initializeGame() async {
                       );
                       return;
                     }
-                    _addPlayedCard(details.data);
+                      // Suit constraint rule check
+                    bool isAllowed = await _isCardAllowed(details.data, roundId);
+                    if (!isAllowed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Suit constraint! You must play the same suit!'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                      _addPlayedCard(details.data);
                     int urplayernumber = await db.getUrPlayernumber(widget.uid, widget.gid);
                     if (urplayernumber == 4) {
                       urplayernumber = 0;
@@ -250,8 +298,12 @@ void _initializeGame() async {
                     String nextplayer = await db.getNextUserUid(widget.gid, urplayernumber+1);
                     db.updateWhosTurn(roundId, nextplayer);
                     db.addPlayInRound(roundId, widget.uid, details.data.cid);
-                    counter++;
+                    _updateCardStates();
+                      counter++;
                     if (playedCards.length == 4) {
+                      String currentRoundId = await db.GetRoundID(widget.gid);
+                      db.clearFirstCardForRound(currentRoundId);
+                      
                       gameLogic.startNewRound(widget.uid);
                       String winner = await db.getWinningCard(playedCards, widget.gid);
                       db.updateWinnerDB(winner, roundId);
@@ -377,7 +429,6 @@ class CardHand extends StatelessWidget {
   }
 }
 
-
 class CardWidget extends StatelessWidget {
   final Jasskarte card;
 
@@ -387,38 +438,43 @@ class CardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Draggable<Jasskarte>(
       data: card,
-
-      // 👇 Das ist das "fliegende" Bild
-      feedback: Material(
-        color: Colors.transparent,
-        child: SizedBox(
-          width: 80,
-          height: 120,
+      feedback: Transform.scale(
+        scale: 1.2,
+        child: Image.asset(
+          card.path,
+          width: 60,
+          height: 90,
+          fit: BoxFit.cover,
+        ),
+      ),
+      childWhenDragging: Container(
+        width: 60,
+        height: 90,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          color: Colors.grey,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
           child: Image.asset(
             card.path,
             fit: BoxFit.cover,
           ),
         ),
       ),
-
-      // 👇 Das wird an der Ursprungsposition angezeigt, während du ziehst
-      childWhenDragging: const SizedBox(
-        width: 80,
-        height: 120,
-      ),
-
-      // 👇 Das ist das normale Bild, wenn NICHT gezogen wird
-      child: SizedBox(
-        width: 80,
-        height: 120,
-        child: Image.asset(
-          card.path,
-          fit: BoxFit.cover,
-        ),
-      ),
     );
   }
-  
-  
 }
 

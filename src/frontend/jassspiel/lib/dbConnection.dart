@@ -105,7 +105,6 @@ class DbConnection {
   }
 
 Future<List<Jasskarte>> getPlayedCards(String rid) async {
-  // Variante A: Sofern FOREIGN KEY korrekt eingerichtet ist
   final response = await client
       .from('plays')
       .select('CID, card(symbol, cardtype)')
@@ -134,7 +133,7 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
 
 
   Future<void> addPlayerToGame(String gid, String uid, String name) async {
-    // Stelle sicher, dass der User existiert
+
     await saveUserIfNeeded(uid, name);
 
     final existing = await client
@@ -189,7 +188,6 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       }
     }
   }
-
   Future<List<Jasskarte>> getUrCards(String gid, String uid) async {
     final response = await client
         .from('cardingames')
@@ -207,15 +205,40 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       );
       cards.add(card);
     }
+    print('DEBUG: ${cards.length} Karten für UID $uid in GID $gid geladen');
     return cards;
   }
 
-  Future<void> addPlayInRound(String rid, String uid, String cid) async {
+  Future<List<Jasskarte>> getMyHand(String gid) async {
+    final uid = await getOrCreateUid();
+    return await getUrCards(gid, uid);
+  }
+
+
+  Future<int> getCardCount(String gid, String uid) async {
+    final response = await client
+        .from('cardingames')
+        .select('CID')
+        .eq('UID', uid)
+        .eq('GID', gid);
+    return response.length;
+  }  Future<void> addPlayInRound(String rid, String uid, String cid) async {
+    final existingPlays = await client
+        .from('plays')
+        .select('CID')
+        .eq('RID', rid);
+
+    if (existingPlays.isEmpty) {
+      _firstCardsPerRound[rid] = cid;
+      firstCard.value = cid;
+      print('DEBUG: First card of round $rid stored: $cid');
+    }
     await client.from('plays').insert({
       'RID': rid,
       'UID': uid,
       'CID': cid,
-    });
+    });    
+    print('DEBUG: Card $cid for player $uid in round $rid inserted');
   }
 
   Future<String> GetRoundID(String gid) async {
@@ -231,6 +254,39 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     } else {
       return '';
     }
+  }  
+  Future<String?> getFirstCardInRound(String rid) async {
+    if (_firstCardsPerRound.containsKey(rid)) {
+      return _firstCardsPerRound[rid];
+    }
+    
+    final response = await client
+        .from('plays')
+        .select('CID')
+        .eq('RID', rid)
+        .limit(1)
+        .maybeSingle();
+    
+    if (response != null) {
+      final firstCardCid = response['CID'] as String;
+      _firstCardsPerRound[rid] = firstCardCid;
+      return firstCardCid;
+    }
+    
+    return null;
+  }
+
+  Future<Jasskarte?> getFirstCardInRoundAsCard(String rid) async {
+    final cid = await getFirstCardInRound(rid);
+    if (cid != null) {
+      try {
+        return await getCardByCid(cid);
+      } catch (e) {
+        print('ERROR: Could not load first card: $e');
+        return null;
+      }
+    }
+    return null;
   }
   Future<bool> isTrumpf(String cid, String gid) async {
     final response = await client
@@ -326,8 +382,12 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
 
     return completer.future;
   }
+  
 RealtimeChannel? _playsChannel;
-final ValueNotifier<String?> neueKarte = ValueNotifier(null);
+final ValueNotifier<String?> newCard = ValueNotifier(null);
+final ValueNotifier<String?> firstCard = ValueNotifier(null);
+final Map<String, String> _firstCardsPerRound = {};
+
 Future<void> subscribeToPlayedCards(String currentRid) async{
   if (currentRid.isEmpty) return;
   if (_playsChannel != null) {
@@ -338,11 +398,17 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       .onPostgresChanges(
         event: PostgresChangeEvent.insert,
         schema: 'public',
-        table: 'plays',
-        callback: (payload) {
+        table: 'plays',        callback: (payload) async {
           final newCid = payload.newRecord['CID'];
           if (newCid != null) {
-            neueKarte.value = newCid;
+            newCard.value = newCid;
+            
+            // Check if this is the first card of the round
+            if (!_firstCardsPerRound.containsKey(currentRid)) {
+              _firstCardsPerRound[currentRid] = newCid;
+              firstCard.value = newCid;
+              print('DEBUG: First card of round $currentRid recognized via subscription: $newCid');
+            }
           }
         },
       )
@@ -363,13 +429,15 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
   Future<bool> isCodeAvailable(String code) async {
     final resp = await client.from('games').select('GID').eq('GID', code).maybeSingle();
     return resp == null;
-  }
-
+  }  
   Future<void> startNewRound(String gid, int whichround) async {
     await client.from('rounds').insert({
       'GID': gid,
       'whichround': whichround + 1,
-    });
+    });    
+
+    firstCard.value = null;
+    print('DEBUG: First card notifier reset for new round');
   }
 
   Future<int> getWhichRound(String gid) async {
@@ -387,6 +455,7 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       return -1;
     }
   }
+
   void updateWhosTurn(String rid, String uid) async {
     await client.from('rounds').update({'whoIsAtTurn': uid}).eq('RID', rid);
   }
@@ -427,9 +496,13 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         return response['UID'];
       }
       else {throw Exception('Error in getNextUserUid gid: $gid playernumber $playernumber');}
-  }  
+  }    
   
   Future<void> updateTrumpf(String gid, String trumpf) async {
+    await client.from('cardingames')
+        .update({'isTrumpf': false})
+        .eq('GID', gid);
+    
     final cardResponse = await client
         .from('card')
         .select('CID')
@@ -444,8 +517,21 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
             .eq('GID', gid)
             .eq('CID', cardId);
       }
-      print('DEBUG: ${trumpfCardIds.length} Karten von $trumpf für GID $gid auf true gesetzt');
+      print('DEBUG: ${trumpfCardIds.length} cards of $trumpf for GID $gid set to true');
     }
+  }  void clearFirstCardCache() {
+    _firstCardsPerRound.clear();
+    firstCard.value = null;
+    print('DEBUG: First card cache cleared');
+  }
+
+  void clearFirstCardForRound(String rid) {
+    _firstCardsPerRound.remove(rid);
+
+    if (firstCard.value != null && _firstCardsPerRound[rid] == firstCard.value) {
+      firstCard.value = null;
+    }
+    print('DEBUG: First card cleared for round $rid');
   }
 }
 
