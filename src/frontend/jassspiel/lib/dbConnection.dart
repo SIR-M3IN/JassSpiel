@@ -216,6 +216,7 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       'UID': uid,
       'CID': cid,
     });
+    neueKarte.value = cid;
   }
 
   Future<String> GetRoundID(String gid) async {
@@ -248,11 +249,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     print('DEBUG getCardType response: $response');
     return response?['cardtype'] as String? ?? '';
   }
-
   Future<int> getCardValue(String cid, String gid) async {
-    if (await isTrumpf(cid, gid)) {
-      switch (await getCardType(cid)) {
-        case 'ASS':
+    String cardType = await getCardType(cid);
+    if (await isTrumpf(cid, gid) == true) {
+      switch (cardType) {
+        case 'Ass':
           return 11;
         case 'König':
           return 4;
@@ -265,11 +266,13 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
         case '9':
           return 14;
         default:
+          print("Have been here trumpf");
           return 0;
       }
     } else {
-      switch (await getCardType(cid)) {
-        case 'ASS':
+      print("Do not annoy me");
+      switch (cardType) {
+        case 'Ass':
           return 11;
         case 'König':
           return 4;
@@ -280,15 +283,91 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
         case '10':
           return 10;
         default:
+          print("Have been here");
           return 0;
       }
     }
   }
+Future<int> getCardWorth(String cid, String gid) async {
+    if (await isTrumpf(cid, gid)) {
+      switch (await getCardType(cid)) {
+        case 'Ass':
+          return 19;
+        case 'König':
+          return 18;
+        case 'Ober':
+          return 17;
+        case 'Unter':
+          return 16;
+        case '10':
+          return 15;
+        case '9':
+          return 14;
+        case '8':
+          return 13;
+        case '7':
+          return 12;
+        case '6':
+          return 11;
+        default:
+          return 0;
+      }
+    } else {
+      switch (await getCardType(cid)) {
+        case 'Ass':
+          return 9;
+        case 'König':
+          return 8;
+        case 'Ober':
+          return 7;
+        case 'Unter':
+          return 6;
+        case '10':
+          return 5;
+        case '9':
+          return 4;
+        case '8':
+          return 3;
+        case '7':
+          return 2;
+        case '6':
+          return 1;
+        default:
+          return 0;
+      }
+    }
+  }
+  Future<int> savePointsForUsers(List<Jasskarte> cards, String gid, String winnerUid, String teammateUid) async {
+    int totalPoints = 0;
+    print(cards);
+    for (var card in cards) {
+      totalPoints += await getCardValue(card.cid, gid);
+    }
+    print("Total Points: $totalPoints");
+    // print("WinnerUID: $winnerUid");
+    // print("GID: $gid");
+    // print("TeammateUID: $teammateUid");
+    final response = await client
+        .from('usergame')
+        .select('UID, score')
+        .eq('GID', gid)
+        .or('UID.eq.$winnerUid,UID.eq.$teammateUid');
+        
+    print("RESPONSE: $response");
+    final scores = {for (var item in response) item['UID']: item['score'] as int? ?? 0};
+    print("Score $scores");
+    await client.from('usergame').upsert([
+      {'UID': winnerUid, 'GID': gid, 'score': scores[winnerUid]! + totalPoints},
+      {'UID': teammateUid, 'GID': gid, 'score': scores[teammateUid]! + totalPoints},
+    ]);
+    print("here");
 
+    return totalPoints;
+  }
   Future<String> getWinningCard(List<Jasskarte> cards, String gid) async {
     Jasskarte? winningCard;
     for (var card in cards) {
-      if (winningCard == null || await getCardValue(card.cid, gid) > await getCardValue(winningCard.cid, gid)) {
+      if (winningCard == null || await getCardWorth(card.cid, gid) > await getCardWorth(winningCard.cid, gid)) {
         winningCard = card;
       }
     }
@@ -340,11 +419,15 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         schema: 'public',
         table: 'plays',
         callback: (payload) {
+        final newRecord = payload.newRecord;
+        if (newRecord['RID'] == currentRid) {
           final newCid = payload.newRecord?['CID'];
           if (newCid != null) {
             neueKarte.value = newCid;
           }
+        }
         },
+  
       )
       .subscribe();
 

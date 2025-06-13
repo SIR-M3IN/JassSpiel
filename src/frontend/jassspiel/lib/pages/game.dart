@@ -111,6 +111,7 @@ class _GameScreenState extends State<GameScreen> {
   String currentRoundid = '';
   List<Jasskarte> playedCards = [];
   late Future<List<Jasskarte>> playerCards = Future.value([]);
+  List<Spieler> players = [];
 
 void _addPlayedCard(Jasskarte card) {
   setState(() {
@@ -129,8 +130,14 @@ void _addPlayedCard(Jasskarte card) {
   print("Neue Karte empfangen");
   final cardCid = db.neueKarte.value;
   if (cardCid != null) {
-
     if (playedCards.any((existingCard) => existingCard.cid == cardCid)) {
+      if (playedCards.length == 4) {
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      setState(() {
+        playedCards = [];
+      });
+    }
         return; 
     }
     Jasskarte newCard = await db.getCardByCid(cardCid);
@@ -246,8 +253,12 @@ void _initializeGame() async {
                     db.addPlayInRound(roundId, widget.uid, details.data.cid);
                     counter++;
                     if (playedCards.length == 4) {
-                      gameLogic.startNewRound(widget.uid);
                       String winner = await db.getWinningCard(playedCards, widget.gid);
+                      var winnernumber = await db.getUrPlayernumber(winner, widget.gid);
+                      var teammatenumber = (winnernumber + 1) % 4 +1;
+                      String teammateuid = await db.getNextUserUid(widget.gid, teammatenumber);
+                      await db.savePointsForUsers(playedCards, widget.gid, winner, teammateuid);
+                      gameLogic.startNewRound(widget.uid);
                       db.updateWinnerDB(winner, roundId);
                       playedCards = [];
                     }
