@@ -105,7 +105,6 @@ class DbConnection {
   }
 
 Future<List<Jasskarte>> getPlayedCards(String rid) async {
-  // Variante A: Sofern FOREIGN KEY korrekt eingerichtet ist
   final response = await client
       .from('plays')
       .select('CID, card(symbol, cardtype)')
@@ -134,7 +133,6 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
 
 
   Future<void> addPlayerToGame(String gid, String uid, String name) async {
-    // Stelle sicher, dass der User existiert
     await saveUserIfNeeded(uid, name);
 
     final existing = await client
@@ -235,11 +233,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
   }
   Future<bool> isTrumpf(String cid, String gid) async {
     final response = await client
-        .from('cardingames')
-        .select('isTrumpf')
-        .eq('CID', cid)
-        .eq('GID', gid)
-        .maybeSingle();
+      .from('cardingames')
+      .select('isTrumpf')
+      .eq('CID', cid)
+      .eq('GID', gid)
+      .maybeSingle();
     print('DEBUG isTrumpf response: $response');
     return response?['isTrumpf'] as bool? ?? false;
   }

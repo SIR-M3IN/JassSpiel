@@ -9,10 +9,10 @@ def main():
     app = connexion.App(__name__, specification_dir='./openapi/')
     app.app.json_encoder = encoder.JSONEncoder
     app.add_api('openapi.yaml',
-                arguments={'title': 'Card Game API'},
+                arguments={'title': 'JassSpiel API'},
                 pythonic_params=True)
 
-    app.run(port=8080)
+    app.run(port=8080, debug=True, use_reloader=True, use_evalex=True)
 
 
 if __name__ == '__main__':

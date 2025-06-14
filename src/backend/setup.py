@@ -20,10 +20,10 @@ REQUIRES = [
 setup(
     name=NAME,
     version=VERSION,
-    description="Card Game API",
+    description="JassSpiel API",
     author_email="",
     url="",
-    keywords=["OpenAPI", "Card Game API"],
+    keywords=["OpenAPI", "JassSpiel API"],
     install_requires=REQUIRES,
     packages=find_packages(),
     package_data={'': ['openapi/openapi.yaml']},
@@ -31,7 +31,7 @@ setup(
     entry_points={
         'console_scripts': ['openapi_server=openapi_server.__main__:main']},
     long_description="""\
-    API für ein Kartenspiel mit Benutzer-, Spiel- und Rundeverwaltung
+    API für das JassSpiel Backend
     """
 )
 
