@@ -611,7 +611,6 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
     print('DEBUG: First card cleared for round $rid');
   }
-
   Future<List<Map<String, dynamic>>> getOpenGames() async {
     final response = await client
         .from('games')
@@ -619,6 +618,20 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         .eq('status', 'waiting')
         .lt('participants', 4);
     return List<Map<String, dynamic>>.from(response as List);
+  }
+
+  Future<int> getPlayerScore(String uid, String gid) async {
+    final response = await client
+        .from('usergame')
+        .select('score')
+        .eq('UID', uid)
+        .eq('GID', gid)
+        .maybeSingle();
+    
+    if (response != null && response['score'] != null) {
+      return response['score'] as int;
+    }
+    return 0;
   }
 }
 
