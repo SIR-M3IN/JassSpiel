@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:jassspiel/DBConnection.dart';
+import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/gamelogic.dart';
 import '../spieler.dart';
 import '../jasskarte.dart';
+import 'package:jassspiel/pages/showTrumpfDialogPage.dart';
 
 void main() {
   runApp(const CardGameApp());
@@ -61,21 +62,82 @@ class _InitWidgetState extends State<InitWidget> {
       await Future.delayed(const Duration(seconds: 2));
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: loading
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Waiting for players...', style: TextStyle(fontSize: 24)),
-                  const SizedBox(height: 16),
-                  Text('Party Code: ${widget.gid}', style: const TextStyle(fontSize: 18)),
-                ],
-              )
-            : const Text('Players loaded!'),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.deepPurple,
+              Colors.indigo,
+              Colors.blue,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: loading
+                ? Container(
+                    padding: const EdgeInsets.all(40),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          '⏳ Waiting for players...',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Party Code: ${widget.gid}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const Text(
+                    '🎉 Players loaded!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -99,7 +161,7 @@ class CardGameApp extends StatelessWidget {
 class GameScreen extends StatefulWidget {
   final String gid;
   final String uid;
-  GameScreen({required this.gid, required this.uid, super.key});
+  const GameScreen({required this.gid, required this.uid, super.key});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -110,8 +172,9 @@ class _GameScreenState extends State<GameScreen> {
   int counter = 0;
   String currentRoundid = '';
   List<Jasskarte> playedCards = [];
+  List<Spieler> players = []; 
+  int myPlayerNumber = 1; 
   late Future<List<Jasskarte>> playerCards = Future.value([]);
-  List<Spieler> players = [];
 
 void _addPlayedCard(Jasskarte card) {
   setState(() {
@@ -125,10 +188,43 @@ void _addPlayedCard(Jasskarte card) {
     });
   });
 }
+
+Future<bool> _isCardAllowed(Jasskarte card, String roundId) async {
+  String? firstCardCid = await db.getFirstCardInRound(roundId);
+  
+  if (firstCardCid == null) {
+    return true;
+  }
+  
+  Jasskarte? firstCard = await db.getFirstCardInRoundAsCard(roundId);
+  if (firstCard == null) {
+    return true; 
+  }
+  
+  bool isCardTrumpf = await db.isTrumpf(card.cid, widget.gid);
+  if (isCardTrumpf) {
+    return true;
+  }
+  
+  List<Jasskarte> myCards = await db.getUrCards(widget.gid, widget.uid);
+  
+  bool hasSameSuit = myCards.any((k) => k.symbol == firstCard.symbol);
+  
+  if (hasSameSuit) {
+    return card.symbol == firstCard.symbol;
+  }
+  return true;
+}
+
+void _updateCardStates() {
+  setState(() {
+  });
+}
+
 // KI: Hilf mir die Karten bei allen Spielern anzuzeigen
-  void _handleNewCardFromListener() async {
-  print("Neue Karte empfangen");
-  final cardCid = db.neueKarte.value;
+void _handleNewCardFromListener() async {
+  print("New card received");
+  final cardCid = db.newCard.value;
   if (cardCid != null) {
     if (playedCards.any((existingCard) => existingCard.cid == cardCid)) {
       if (playedCards.length == 4) {
@@ -147,12 +243,18 @@ void _addPlayedCard(Jasskarte card) {
       playedCards.add(newCard);
     });
     
-    if (playedCards.length == 4) {
+    _updateCardStates();
+      if (playedCards.length == 4) {
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
+      
+      String currentRoundId = await db.GetRoundID(widget.gid);
+      db.clearFirstCardForRound(currentRoundId);
+      
       setState(() {
         playedCards = [];
       });
+      _updateCardStates();
     }
   }
 
@@ -164,12 +266,20 @@ void initState() {
   super.initState();
   gameLogic = GameLogic(widget.gid);
   _initializeGame();
-  db.neueKarte.addListener(_handleNewCardFromListener);
+  db.newCard.addListener(_handleNewCardFromListener);
 
 }
 
 void _initializeGame() async {
-  List<Spieler> players = await db.loadPlayers(widget.gid);
+  List<Spieler> loadedPlayers = await db.loadPlayers(widget.gid);
+  
+  int ownPlayerNumber = await db.getUrPlayernumber(widget.uid, widget.gid);
+  
+  setState(() {
+    players = loadedPlayers; 
+    myPlayerNumber = ownPlayerNumber;
+  });
+  
   String currentRoundid = await db.GetRoundID(widget.gid);
   if (currentRoundid.isEmpty) {
     await gameLogic.startNewRound(widget.uid);
@@ -182,16 +292,18 @@ void _initializeGame() async {
      
     print('currentRoundid: $currentRoundid');
   }
-  db.subscribeToPlayedCards(currentRoundid);
-  List<Jasskarte> cards = [];
+  db.subscribeToPlayedCards(currentRoundid);  List<Jasskarte> cards = [];
   while (cards.length < 9) {
     cards = await gameLogic.shuffleandgetCards(players, widget.uid);
-  }
-  for (var card in cards) {
-    if (card.symbol == 'Schella' && card.cardType == '6'){
-        await gameLogic.startNewRound(widget.uid);
-        String roundId = await db.GetRoundID(widget.gid);
-        db.updateWhosTurn(roundId, widget.uid);
+  }for (var card in cards) {
+    if (card.symbol == 'Schella' && card.cardType == '6') {
+      await gameLogic.startNewRound(widget.uid);
+      
+      String roundId = await db.GetRoundID(widget.gid);
+      db.updateWhosTurn(roundId, widget.uid);      String? selectedTrumpf = await showTrumpfDialog(context, playerCards: cards);
+      if (selectedTrumpf != null) {
+        await db.updateTrumpf(widget.gid, selectedTrumpf);
+      }
     }
   }
   setState(() {playerCards = Future.value(cards);});
@@ -211,28 +323,25 @@ void _initializeGame() async {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Stack(
-              children: [
-                Positioned(
+              children: [                Positioned(
                   top: 16,
                   left: 0,
                   right: 0,
-                  child: Center(child: playerAvatar('Player 1')),
+                  child: Center(child: playerAvatar(getPlayerNameByRelativePosition('top'))),
                 ),
                 Positioned(
                   top: 180,
                   left: 16,
-                  child: playerAvatar('Player 4'),
+                  child: playerAvatar(getPlayerNameByRelativePosition('left')),
                 ),
                 Positioned(
                   top: 180,
                   right: 16,
-                  child: playerAvatar('Player 3'),
+                  child: playerAvatar(getPlayerNameByRelativePosition('right')),
                 ),
 
-                // Zentrale Spielfläche
               Center(
-                child: 
-                DragTarget<Jasskarte>(
+                child:                DragTarget<Jasskarte>(
                   onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
                   String roundId = '';
                   roundId = await db.GetRoundID(widget.gid);
@@ -243,7 +352,18 @@ void _initializeGame() async {
                       );
                       return;
                     }
-                    _addPlayedCard(details.data);
+                      // Suit constraint rule check
+                    bool isAllowed = await _isCardAllowed(details.data, roundId);
+                    if (!isAllowed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Suit constraint! You must play the same suit!'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                      _addPlayedCard(details.data);
                     int urplayernumber = await db.getUrPlayernumber(widget.uid, widget.gid);
                     if (urplayernumber == 4) {
                       urplayernumber = 0;
@@ -251,8 +371,13 @@ void _initializeGame() async {
                     String nextplayer = await db.getNextUserUid(widget.gid, urplayernumber+1);
                     db.updateWhosTurn(roundId, nextplayer);
                     db.addPlayInRound(roundId, widget.uid, details.data.cid);
-                    counter++;
+                    _updateCardStates();
+                      counter++;
                     if (playedCards.length == 4) {
+                      String currentRoundId = await db.GetRoundID(widget.gid);
+                      db.clearFirstCardForRound(currentRoundId);
+                      
+                      gameLogic.startNewRound(widget.uid);
                       String winner = await db.getWinningCard(playedCards, widget.gid);
                       var winnernumber = await db.getUrPlayernumber(winner, widget.gid);
                       var teammatenumber = (winnernumber + 1) % 4 +1;
@@ -284,9 +409,7 @@ void _initializeGame() async {
                       ),
                     );
                   },
-                ),
-
-              ),
+                ),                ),
 
 // KI: Kartenhand des Spielers geht nicht fixen bitte 
                 Positioned(
@@ -316,7 +439,6 @@ void _initializeGame() async {
       ),
     );
   }
-
   Widget playerAvatar(String name) {
     return Column(
       children: [
@@ -325,6 +447,32 @@ void _initializeGame() async {
         Text(name, style: const TextStyle(color: Colors.white)),
       ],
     );
+  } 
+  // Helper: get name by relative position around table
+  String getPlayerNameByRelativePosition(String position) {
+    int target;
+    switch (position) {
+      case 'right':
+        target = myPlayerNumber % 4 + 1;
+        break;
+      case 'top':
+        target = (myPlayerNumber + 2) % 4;
+        if (target == 0) target = 4;
+        break;
+      case 'left':
+        target = myPlayerNumber - 1;
+        if (target < 1) target += 4;
+        break;
+      default:
+        return '';
+    }
+
+  for (var player in players) {
+    if (player.playernumber == target) {
+      return player.username;
+    }
+  }
+  return 'Player $target';
   }
 }
 
@@ -382,7 +530,6 @@ class CardHand extends StatelessWidget {
   }
 }
 
-
 class CardWidget extends StatelessWidget {
   final Jasskarte card;
 
@@ -392,38 +539,43 @@ class CardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Draggable<Jasskarte>(
       data: card,
-
-      // 👇 Das ist das "fliegende" Bild
-      feedback: Material(
-        color: Colors.transparent,
-        child: SizedBox(
-          width: 80,
-          height: 120,
+      feedback: Transform.scale(
+        scale: 1.2,
+        child: Image.asset(
+          card.path,
+          width: 60,
+          height: 90,
+          fit: BoxFit.cover,
+        ),
+      ),
+      childWhenDragging: Container(
+        width: 60,
+        height: 90,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          color: Colors.grey,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
           child: Image.asset(
             card.path,
             fit: BoxFit.cover,
           ),
         ),
       ),
-
-      // 👇 Das wird an der Ursprungsposition angezeigt, während du ziehst
-      childWhenDragging: const SizedBox(
-        width: 80,
-        height: 120,
-      ),
-
-      // 👇 Das ist das normale Bild, wenn NICHT gezogen wird
-      child: SizedBox(
-        width: 80,
-        height: 120,
-        child: Image.asset(
-          card.path,
-          fit: BoxFit.cover,
-        ),
-      ),
     );
   }
-  
-  
 }
 
