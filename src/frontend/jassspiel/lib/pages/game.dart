@@ -62,21 +62,82 @@ class _InitWidgetState extends State<InitWidget> {
       await Future.delayed(const Duration(seconds: 2));
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: loading
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Waiting for players...', style: TextStyle(fontSize: 24)),
-                  const SizedBox(height: 16),
-                  Text('Party Code: ${widget.gid}', style: const TextStyle(fontSize: 18)),
-                ],
-              )
-            : const Text('Players loaded!'),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.deepPurple,
+              Colors.indigo,
+              Colors.blue,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: loading
+                ? Container(
+                    padding: const EdgeInsets.all(40),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          '⏳ Waiting for players...',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Party Code: ${widget.gid}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const Text(
+                    '🎉 Players loaded!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -224,9 +285,7 @@ void _initializeGame() async {
       await gameLogic.startNewRound(widget.uid);
       
       String roundId = await db.GetRoundID(widget.gid);
-      db.updateWhosTurn(roundId, widget.uid);
-
-      String? selectedTrumpf = await showTrumpfDialog(context);
+      db.updateWhosTurn(roundId, widget.uid);      String? selectedTrumpf = await showTrumpfDialog(context, playerCards: cards);
       if (selectedTrumpf != null) {
         await db.updateTrumpf(widget.gid, selectedTrumpf);
       }

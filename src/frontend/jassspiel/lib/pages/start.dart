@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jassspiel/dbConnection.dart';
 
+
+// KI: Update UI
+
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
 
