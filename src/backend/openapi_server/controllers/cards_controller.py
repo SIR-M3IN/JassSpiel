@@ -49,11 +49,11 @@ def cards_determine_winning_card_post(
         req = DetermineWinningCardRequest.from_dict(body)
         logic_cards = [LogicJasskarte(cid=c.cid) for c in (req.cards or []) if c and c.cid]
         if not logic_cards:
-            return WinningCardResponse(uid=""), 200
+            return WinningCardResponse(winner_uid=""), 200
         winner = get_winning_card(logic_cards, gid)
-        return WinningCardResponse(uid=winner), 200
+        return WinningCardResponse(winner_uid=winner), 200
     except Exception:
-        return WinningCardResponse(uid=""), 500
+        return WinningCardResponse(winner_uid=""), 500
 
 def cards_get():
     try:

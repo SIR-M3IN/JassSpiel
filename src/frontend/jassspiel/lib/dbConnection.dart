@@ -130,8 +130,7 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
   print('DEBUG getPlayedCards liefert ${playedCards.length} Karten zurück');
   return playedCards;
 }
-
-
+  
   Future<void> addPlayerToGame(String gid, String uid, String name) async {
     await saveUserIfNeeded(uid, name);
 
@@ -221,7 +220,8 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
         .eq('UID', uid)
         .eq('GID', gid);
     return response.length;
-  }  Future<void> addPlayInRound(String rid, String uid, String cid) async {
+  }  
+  Future<void> addPlayInRound(String rid, String uid, String cid) async {
     final existingPlays = await client
         .from('plays')
         .select('CID')
@@ -421,6 +421,7 @@ Future<int> getCardWorth(String cid, String gid) async {
   Future<String> getWinningCard(List<Jasskarte> cards, String gid) async {
     Jasskarte? winningCard;
     for (var card in cards) {
+      print(card);
       if (winningCard == null || await getCardWorth(card.cid, gid) > await getCardWorth(winningCard.cid, gid)) {
         winningCard = card;
       }
@@ -437,8 +438,6 @@ Future<int> getCardWorth(String cid, String gid) async {
   Future<void> updateWinnerDB(String uid, String rid) async{
     await client.from('rounds').update({'winnerid': uid}).eq('RID', rid);
   }
-
-
   Future<List<Spieler>> waitForFourPlayers(String gid) {
     final completer = Completer<List<Spieler>>();
     void checkPlayers() async {
@@ -498,9 +497,6 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
 
   currentRid = currentRid;
 }
-
-
-
 
   String _generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

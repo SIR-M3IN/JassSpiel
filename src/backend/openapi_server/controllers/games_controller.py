@@ -2,6 +2,7 @@ import connexion
 from typing import Dict
 from typing import Tuple
 from typing import Union
+import random
 
 from openapi_server.models.add_player_request import AddPlayerRequest  # noqa: E501
 from openapi_server.models.card_details_response import CardDetailsResponse  # noqa: E501
@@ -19,6 +20,7 @@ from openapi_server.models.spieler import Spieler  # noqa: E501
 from openapi_server.models.start_new_round_request import StartNewRoundRequest  # noqa: E501
 from openapi_server.models.update_trumpf_request import UpdateTrumpfRequest  # noqa: E501
 from openapi_server import util
+from openapi_server.db import supabase
 
 
 def games_gid_card_info_cid_get(gid, cid):  # noqa: E501
@@ -33,10 +35,31 @@ def games_gid_card_info_cid_get(gid, cid):  # noqa: E501
 
     :rtype: Union[CardDetailsResponse, Tuple[CardDetailsResponse, int], Tuple[CardDetailsResponse, int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        # Check if card is trumpf in this game
+        resp = supabase.table('cardingames').select('isTrumpf').eq('GID', gid).eq('CID', cid).maybe_single().execute()
+        is_trumpf = bool(resp.data.get('isTrumpf')) if resp and resp.data else False
+        # Retrieve card type
+        ct_resp = supabase.table('card').select('cardtype').eq('CID', cid).maybe_single().execute()
+        cardtype = ct_resp.data.get('cardtype') if ct_resp and ct_resp.data else ''
+        # Determine value
+        if is_trumpf:
+            value_map = {'Ass': 11, 'König': 4, 'Ober': 3, 'Unter': 20, '10': 10, '9': 14}
+        else:
+            value_map = {'Ass': 11, 'König': 4, 'Ober': 3, 'Unter': 2, '10': 10, '9': 0}
+        value = value_map.get(cardtype, 0)
+        # Determine worth
+        if is_trumpf:
+            worth_map = {'Ass': 19, 'König': 18, 'Ober': 17, 'Unter': 16, '10': 15, '9': 14, '8': 13, '7': 12, '6': 11}
+        else:
+            worth_map = {'Ass': 9, 'König': 8, 'Ober': 7, 'Unter': 6, '10': 5, '9': 4, '8': 3, '7': 2, '6': 1}
+        worth = worth_map.get(cardtype, 0)
+        return CardDetailsResponse(cid=cid, is_trumpf=is_trumpf, value=value, worth=worth), 200
+    except Exception as e:
+        print(f"Error in games_gid_card_info_cid_get: {e}")
+        return Error(message="Fehler beim Abrufen der Karteninfo."), 500
 
-
-def games_gid_cards_shuffle_post(gid):  # noqa: E501
+def games_gid_cards_shuffle_post(gid): #!  # noqa: E501
     """Mischt und verteilt Karten an die Spieler eines Spiels.
 
      # noqa: E501
@@ -46,8 +69,35 @@ def games_gid_cards_shuffle_post(gid):  # noqa: E501
 
     :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
     """
-    return 'do some magic!'
-
+    try:
+        # Clear previous assignments
+        supabase.table('cardingames').delete().eq('GID', gid).execute()
+        # Get all card IDs
+        cards_resp = supabase.table('card').select('CID').execute()
+        cids = [d['CID'] for d in (cards_resp.data or [])]
+        # Get all players in game
+        players_resp = supabase.table('usergame').select('UID').eq('GID', gid).execute()
+        uids = [d['UID'] for d in (players_resp.data or [])]
+        # Shuffle and prepare batch insert records
+        random.shuffle(cids)
+        records = []
+        if uids and cids:
+            hand_size = len(cids) // len(uids)
+            for i, uid in enumerate(uids):
+                start = i * hand_size
+                end = start + hand_size
+                for cid in cids[start:end]:
+                    records.append({'UID': uid, 'CID': cid, 'GID': gid})
+        if records:
+            print(f"DEBUG shuffle: inserting {len(records)} cards for game {gid}")
+            insert_resp = supabase.table('cardingames').insert(records).execute()
+            if hasattr(insert_resp, 'error') and insert_resp.error:
+                print(f"Error inserting cards: {insert_resp.error.message}")
+                raise Exception(insert_resp.error.message)
+        return None, 200
+    except Exception as e:
+        print(f"Error in games_gid_cards_shuffle_post: {e}")
+        return Error(message="Fehler beim Mischen der Karten."), 500
 
 def games_gid_current_round_id_get(gid):  # noqa: E501
     """Holt die ID der aktuellen Runde für ein Spiel.
@@ -59,7 +109,13 @@ def games_gid_current_round_id_get(gid):  # noqa: E501
 
     :rtype: Union[GamesGidCurrentRoundIdGet200Response, Tuple[GamesGidCurrentRoundIdGet200Response, int], Tuple[GamesGidCurrentRoundIdGet200Response, int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        resp = supabase.table('rounds').select('RID').eq('GID', gid).order('whichround', desc=True).limit(1).maybe_single().execute()
+        rid = resp.data.get('RID') if resp and resp.data else ''
+        return GamesGidCurrentRoundIdGet200Response(rid=rid), 200
+    except Exception as e:
+        print(f"Error in games_gid_current_round_id_get: {e}")
+        return GamesGidCurrentRoundIdGet200Response(rid=""), 500
 
 
 def games_gid_current_round_number_get(gid):  # noqa: E501
@@ -72,7 +128,13 @@ def games_gid_current_round_number_get(gid):  # noqa: E501
 
     :rtype: Union[GamesGidCurrentRoundNumberGet200Response, Tuple[GamesGidCurrentRoundNumberGet200Response, int], Tuple[GamesGidCurrentRoundNumberGet200Response, int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        resp = supabase.table('rounds').select('whichround').eq('GID', gid).order('whichround', desc=True).limit(1).maybe_single().execute()
+        which = resp.data.get('whichround') if resp and resp.data else 0
+        return GamesGidCurrentRoundNumberGet200Response(whichround=which), 200
+    except Exception as e:
+        print(f"Error in games_gid_current_round_number_get: {e}")
+        return GamesGidCurrentRoundNumberGet200Response(whichround=0), 500
 
 
 def games_gid_join_post(gid):  # noqa: E501
@@ -85,7 +147,16 @@ def games_gid_join_post(gid):  # noqa: E501
 
     :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        resp = supabase.table('games').select('participants').eq('GID', gid).maybe_single().execute()
+        if not resp or not resp.data:
+            return Error(message="Spiel nicht gefunden."), 404
+        current = resp.data.get('participants', 0)
+        supabase.table('games').update({'participants': current + 1}).eq('GID', gid).execute()
+        return None, 200
+    except Exception as e:
+        print(f"Error in games_gid_join_post: {e}")
+        return Error(message="Fehler beim Beitreten zum Spiel."), 500
 
 
 def games_gid_next_player_uid_get(gid, playernumber):  # noqa: E501
@@ -100,7 +171,13 @@ def games_gid_next_player_uid_get(gid, playernumber):  # noqa: E501
 
     :rtype: Union[GamesGidNextPlayerUidGet200Response, Tuple[GamesGidNextPlayerUidGet200Response, int], Tuple[GamesGidNextPlayerUidGet200Response, int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        resp = supabase.table('usergame').select('UID').eq('GID', gid).eq('playernumber', playernumber).maybe_single().execute()
+        uid = resp.data.get('UID') if resp and resp.data else ''
+        return GamesGidNextPlayerUidGet200Response(uid=uid), 200
+    except Exception as e:
+        print(f"Error in games_gid_next_player_uid_get: {e}")
+        return GamesGidNextPlayerUidGet200Response(uid=""), 500
 
 
 def games_gid_players_get(gid):  # noqa: E501
@@ -113,7 +190,16 @@ def games_gid_players_get(gid):  # noqa: E501
 
     :rtype: Union[List[Spieler], Tuple[List[Spieler], int], Tuple[List[Spieler], int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        resp = supabase.table('usergame').select('playernumber,User!usergame_UID_fkey(UID,name)').eq('GID', gid).execute()
+        players = []
+        for d in (resp.data or []):
+            user = d.get('User') or {}
+            players.append(Spieler(uid=user.get('UID'), name=user.get('name'), playernumber=d.get('playernumber')))
+        return players, 200
+    except Exception as e:
+        print(f"Error in games_gid_players_get: {e}")
+        return [], 500
 
 
 def games_gid_players_post(gid, body):  # noqa: E501
@@ -128,10 +214,30 @@ def games_gid_players_post(gid, body):  # noqa: E501
 
     :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
     """
-    add_player_request = body
-    if connexion.request.is_json:
-        add_player_request = AddPlayerRequest.from_dict(connexion.request.get_json())  # noqa: E501
-    return 'do some magic!'
+    try:
+        if connexion.request.is_json:
+            req = AddPlayerRequest.from_dict(connexion.request.get_json())
+        else:
+            req = body
+        # Ensure user exists
+        usr = supabase.table('User').select('UID').eq('UID', req.uid).maybe_single().execute()
+        if not usr or not usr.data:
+            supabase.table('User').insert({'UID': req.uid, 'name': req.name}).execute()
+        else:
+            supabase.table('User').update({'name': req.name}).eq('UID', req.uid).execute()
+        # Prevent duplicate entry: return if user already in game
+        exist = supabase.table('usergame').select('UID').eq('GID', gid).eq('UID', req.uid).maybe_single().execute()
+        if exist and exist.data:
+            return "Spieler existiert schon", 200
+        # Determine next player number
+        ug = supabase.table('usergame').select('playernumber').eq('GID', gid).execute()
+        nums = [d.get('playernumber', 0) for d in (ug.data or [])]
+        next_num = max(nums) + 1 if nums else 1
+        supabase.table('usergame').insert({'GID': gid, 'UID': req.uid, 'playernumber': next_num}).execute()
+        return None, 201
+    except Exception as e:
+        print(f"Error in games_gid_players_post: {e}")
+        return Error(message="Fehler beim Hinzufügen des Spielers."), 500
 
 
 def games_gid_rounds_post(gid, body):  # noqa: E501
@@ -146,10 +252,16 @@ def games_gid_rounds_post(gid, body):  # noqa: E501
 
     :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
     """
-    start_new_round_request = body
-    if connexion.request.is_json:
-        start_new_round_request = StartNewRoundRequest.from_dict(connexion.request.get_json())  # noqa: E501
-    return 'do some magic!'
+    try:
+        if connexion.request.is_json:
+            req = StartNewRoundRequest.from_dict(connexion.request.get_json())
+        else:
+            req = body
+        supabase.table('rounds').insert({'GID': gid, 'whichround': req.whichround}).execute()
+        return None, 201
+    except Exception as e:
+        print(f"Error in games_gid_rounds_post: {e}")
+        return Error(message="Fehler beim Starten einer neuen Runde."), 500
 
 
 def games_gid_trumpf_suit_put(gid, body):  # noqa: E501
@@ -164,10 +276,21 @@ def games_gid_trumpf_suit_put(gid, body):  # noqa: E501
 
     :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
     """
-    update_trumpf_request = body
-    if connexion.request.is_json:
-        update_trumpf_request = UpdateTrumpfRequest.from_dict(connexion.request.get_json())  # noqa: E501
-    return 'do some magic!'
+    try:
+        if connexion.request.is_json:
+            req = UpdateTrumpfRequest.from_dict(connexion.request.get_json())
+        else:
+            req = body
+        # Reset all trumpf flags
+        supabase.table('cardingames').update({'isTrumpf': False}).eq('GID', gid).execute()
+        # Fetch CIDs for the chosen symbol
+        cards = supabase.table('card').select('CID').eq('symbol', req.trumpf_symbol).execute()
+        for c in (cards.data or []):
+            supabase.table('cardingames').update({'isTrumpf': True}).eq('GID', gid).eq('CID', c.get('CID')).execute()
+        return None, 200
+    except Exception as e:
+        print(f"Error in games_gid_trumpf_suit_put: {e}")
+        return Error(message="Fehler beim Aktualisieren der Trumpffarbe."), 500
 
 
 def games_gid_update_scores_post(gid, body):  # noqa: E501
@@ -182,10 +305,37 @@ def games_gid_update_scores_post(gid, body):  # noqa: E501
 
     :rtype: Union[GamesGidUpdateScoresPost200Response, Tuple[GamesGidUpdateScoresPost200Response, int], Tuple[GamesGidUpdateScoresPost200Response, int, Dict[str, str]]
     """
-    save_points_request = body
-    if connexion.request.is_json:
-        save_points_request = SavePointsRequest.from_dict(connexion.request.get_json())  # noqa: E501
-    return 'do some magic!'
+    try:
+        if connexion.request.is_json:
+            req = SavePointsRequest.from_dict(connexion.request.get_json())
+        else:
+            req = body
+        total_points = 0
+        # Calculate total points
+        for card in (req.played_cards or []):
+            cid = card.cid
+            # determine value
+            ct = supabase.table('card').select('cardtype').eq('CID', cid).maybe_single().execute()
+            cardtype = ct.data.get('cardtype') if ct and ct.data else ''
+            tr = supabase.table('cardingames').select('isTrumpf').eq('GID', gid).eq('CID', cid).maybe_single().execute()
+            is_tr = bool(tr.data.get('isTrumpf')) if tr and tr.data else False
+            if is_tr:
+                val_map = {'Ass':11,'König':4,'Ober':3,'Unter':20,'10':10,'9':14}
+            else:
+                val_map = {'Ass':11,'König':4,'Ober':3,'Unter':2,'10':10,'9':0}
+            total_points += val_map.get(cardtype, 0)
+        # Update scores
+        resp = supabase.table('usergame').select('UID,score').eq('GID', gid).in_('UID', [req.winner_uid, req.teammate_uid]).execute()
+        scores = {d['UID']: d.get('score', 0) for d in (resp.data or [])}
+        updates = [
+            {'GID': gid, 'UID': req.winner_uid, 'score': scores.get(req.winner_uid, 0) + total_points},
+            {'GID': gid, 'UID': req.teammate_uid, 'score': scores.get(req.teammate_uid, 0) + total_points},
+        ]
+        supabase.table('usergame').upsert(updates).execute()
+        return GamesGidUpdateScoresPost200Response(total_points=total_points), 200
+    except Exception as e:
+        print(f"Error in games_gid_update_scores_post: {e}")
+        return GamesGidUpdateScoresPost200Response(total_points=0), 500
 
 
 def games_gid_users_uid_card_count_get(gid, uid):  # noqa: E501
@@ -200,7 +350,13 @@ def games_gid_users_uid_card_count_get(gid, uid):  # noqa: E501
 
     :rtype: Union[GamesGidUsersUidCardCountGet200Response, Tuple[GamesGidUsersUidCardCountGet200Response, int], Tuple[GamesGidUsersUidCardCountGet200Response, int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        resp = supabase.table('cardingames').select('CID').eq('GID', gid).eq('UID', uid).execute()
+        count = len(resp.data or [])
+        return GamesGidUsersUidCardCountGet200Response(count=count), 200
+    except Exception as e:
+        print(f"Error in games_gid_users_uid_card_count_get: {e}")
+        return GamesGidUsersUidCardCountGet200Response(count=0), 500
 
 
 def games_gid_users_uid_cards_get(gid, uid):  # noqa: E501
@@ -215,7 +371,16 @@ def games_gid_users_uid_cards_get(gid, uid):  # noqa: E501
 
     :rtype: Union[List[Jasskarte], Tuple[List[Jasskarte], int], Tuple[List[Jasskarte], int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        resp = supabase.table('cardingames').select('CID,card(symbol,cardtype)').eq('GID', gid).eq('UID', uid).execute()
+        cards = []
+        for d in (resp.data or []):
+            card = d.get('card') or {}
+            cards.append(Jasskarte(cid=d.get('CID'), symbol=card.get('symbol'), cardtype=card.get('cardtype'), path=f"assets/{card.get('symbol')}/{card.get('symbol')}_{card.get('cardtype')}.png"))
+        return cards, 200
+    except Exception as e:
+        print(f"Error in games_gid_users_uid_cards_get: {e}")
+        return [], 500
 
 
 def games_gid_users_uid_player_number_get(gid, uid):  # noqa: E501
@@ -230,7 +395,13 @@ def games_gid_users_uid_player_number_get(gid, uid):  # noqa: E501
 
     :rtype: Union[GamesGidUsersUidPlayerNumberGet200Response, Tuple[GamesGidUsersUidPlayerNumberGet200Response, int], Tuple[GamesGidUsersUidPlayerNumberGet200Response, int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        resp = supabase.table('usergame').select('playernumber').eq('GID', gid).eq('UID', uid).maybe_single().execute()
+        num = resp.data.get('playernumber') if resp and resp.data else 0
+        return GamesGidUsersUidPlayerNumberGet200Response(playernumber=num), 200
+    except Exception as e:
+        print(f"Error in games_gid_users_uid_player_number_get: {e}")
+        return GamesGidUsersUidPlayerNumberGet200Response(playernumber=0), 500
 
 
 def games_post():  # noqa: E501
@@ -241,4 +412,18 @@ def games_post():  # noqa: E501
 
     :rtype: Union[GamesPost201Response, Tuple[GamesPost201Response, int], Tuple[GamesPost201Response, int, Dict[str, str]]
     """
-    return 'do some magic!'
+    try:
+        # Generate unique game code
+        chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        code = ''
+        while True:
+            code = ''.join(random.choice(chars) for _ in range(4))
+            chk = supabase.table('games').select('GID').eq('GID', code).maybe_single().execute()
+            if not chk or not chk.data:
+                break
+        # Insert new game
+        supabase.table('games').insert({'GID': code, 'status': 'waiting', 'participants': 1, 'room_name': 'Neuer Raum'}).execute()
+        return GamesPost201Response(gid=code), 201
+    except Exception as e:
+        print(f"Error in games_post: {e}")
+        return Error(message="Fehler beim Erstellen des Spiels."), 500
