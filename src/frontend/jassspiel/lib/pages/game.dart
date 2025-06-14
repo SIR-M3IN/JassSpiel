@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/gamelogic.dart';
+import 'package:jassspiel/swaggerConnection.dart';
 import '../spieler.dart';
 import '../jasskarte.dart';
 import 'package:jassspiel/pages/showTrumpfDialogPage.dart';
@@ -168,6 +169,7 @@ class GameScreen extends StatefulWidget {
 }
 class _GameScreenState extends State<GameScreen> {
   DbConnection db = DbConnection();
+  SwaggerConnection swagger = SwaggerConnection(baseUrl: 'http://localhost:8080'); // Initialize swagger
   late GameLogic gameLogic;
   int counter = 0;
   String currentRoundid = '';
@@ -191,13 +193,14 @@ void _addPlayedCard(Jasskarte card) {
 }
 
 Future<bool> _isCardAllowed(Jasskarte card, String roundId) async {
-  String? firstCardCid = await db.getFirstCardInRound(roundId);
+  String? firstCardCid = await swagger.getFirstCardCid(roundId); 
   
-  if (firstCardCid == null) {
+  if (firstCardCid == null || firstCardCid.isEmpty) { // also check for empty string
     return true;
   }
   
-  Jasskarte? firstCard = await db.getFirstCardInRoundAsCard(roundId);
+  Jasskarte? firstCard = await swagger.getCardByCid(firstCardCid);
+
   if (firstCard == null) {
     return true; 
   }
@@ -207,9 +210,10 @@ Future<bool> _isCardAllowed(Jasskarte card, String roundId) async {
     return true;
   }
   
-  List<Jasskarte> myCards = await db.getUrCards(widget.gid, widget.uid);
+  List<Jasskarte> myCards = await swagger.getUrCards(widget.gid, widget.uid); 
   
-  bool hasSameSuit = myCards.any((k) => k.symbol == firstCard.symbol);
+  // Add null check for firstCard before accessing its symbol
+  bool hasSameSuit = myCards.any((k) => k.symbol == firstCard.symbol); 
   
   if (hasSameSuit) {
     return card.symbol == firstCard.symbol;
@@ -225,7 +229,7 @@ void _updateCardStates() {
 // KI: Hilf mir die Karten bei allen Spielern anzuzeigen
 void _handleNewCardFromListener() async {
   print("New card received");
-  final cardCid = db.newCard.value;
+  final cardCid = db.newCard.value; // Remains db (realtime listener)
   if (cardCid != null) {
     if (playedCards.any((existingCard) => existingCard.cid == cardCid)) {
       if (playedCards.length == 4) {
@@ -237,7 +241,8 @@ void _handleNewCardFromListener() async {
     }
         return; 
     }
-    Jasskarte newCard = await db.getCardByCid(cardCid);
+    // Use swagger to get card details
+    Jasskarte newCard = await swagger.getCardByCid(cardCid); 
     if (!mounted) return;
 
     setState(() {
@@ -249,8 +254,9 @@ void _handleNewCardFromListener() async {
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
       
-      String currentRoundId = await db.GetRoundID(widget.gid);
-      db.clearFirstCardForRound(currentRoundId);
+      // Use swagger to get current round ID
+      String currentRoundId = await swagger.getCurrentRoundId(widget.gid); 
+      db.clearFirstCardForRound(currentRoundId); // Remains db (local cache)
       
       setState(() {
         playedCards = [];
@@ -265,45 +271,64 @@ void _handleNewCardFromListener() async {
 @override
 void initState() {
   super.initState();
-  gameLogic = GameLogic(widget.gid);
+  gameLogic = GameLogic(widget.gid); // GameLogic might also need refactoring if it uses db directly
   _initializeGame();
-  db.newCard.addListener(_handleNewCardFromListener);
+  db.newCard.addListener(_handleNewCardFromListener); // Remains db (realtime listener)
 
 }
 
 void _initializeGame() async {
-  List<Spieler> loadedPlayers = await db.loadPlayers(widget.gid);
+  // Use swagger to load players
+  List<Spieler> loadedPlayers = await swagger.loadPlayers(widget.gid); 
   
-  int ownPlayerNumber = await db.getUrPlayernumber(widget.uid, widget.gid);
+  // Use swagger to get own player number
+  int ownPlayerNumber = await swagger.getUrPlayernumber(widget.uid, widget.gid); 
   
   setState(() {
     players = loadedPlayers; 
     myPlayerNumber = ownPlayerNumber;
   });
   
-  String currentRoundid = await db.GetRoundID(widget.gid);
+  // Use swagger to get current round ID
+  String currentRoundIdValue = await swagger.getCurrentRoundId(widget.gid); 
+  setState(() {
+    currentRoundid = currentRoundIdValue;
+  });
+
   if (currentRoundid.isEmpty) {
-    await gameLogic.startNewRound(widget.uid);
+    // gameLogic.startNewRound might call swagger.startNewRound or db.startNewRound
+    // Assuming gameLogic.startNewRound is already using swagger or is intended to be refactored separately.
+    print("HERE");
+    await gameLogic.startNewRound(widget.uid); 
     print('gid: ${widget.gid}');
     while (currentRoundid.isEmpty) {
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
-    currentRoundid = await db.GetRoundID(widget.gid);
+      currentRoundIdValue = await swagger.getCurrentRoundId(widget.gid); 
+      setState(() {
+        currentRoundid = currentRoundIdValue;
+      });
     }
      
     print('currentRoundid: $currentRoundid');
   }
-  db.subscribeToPlayedCards(currentRoundid);  List<Jasskarte> cards = [];
+  db.subscribeToPlayedCards(currentRoundid); // Remains db (realtime listener)
+  List<Jasskarte> cards = [];
+  // gameLogic.shuffleandgetCards might use swagger or db.
+  // Assuming it's either using swagger or will be refactored.
   while (cards.length < 9) {
     cards = await gameLogic.shuffleandgetCards(players, widget.uid);
-  }for (var card in cards) {
-    if (card.symbol == 'Schella' && card.cardType == '6') {
-      await gameLogic.startNewRound(widget.uid);
-      
-      String roundId = await db.GetRoundID(widget.gid);
-      db.updateWhosTurn(roundId, widget.uid);      String? selectedTrumpf = await showTrumpfDialog(context, playerCards: cards);
+  }
+  for (var card in cards) {
+    if (card.symbol == 'Schella' && card.cardType == '6') {      
+      // Use swagger to get current round ID
+      String roundId = await swagger.getCurrentRoundId(widget.gid); 
+      // Use swagger to update whose turn it is
+      await swagger.updateWhosTurn(roundId, widget.uid); 
+      String? selectedTrumpf = await showTrumpfDialog(context, playerCards: cards);
       if (selectedTrumpf != null) {
-        await db.updateTrumpf(widget.gid, selectedTrumpf);
+        // Use swagger to update trumpf
+        await swagger.updateTrumpf(widget.gid, selectedTrumpf); 
       }
     }
   }
@@ -345,8 +370,10 @@ void _initializeGame() async {
                 child:                DragTarget<Jasskarte>(
                   onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
                   String roundId = '';
-                  roundId = await db.GetRoundID(widget.gid);
-                    String whosturn = await db.getWhosTurn(roundId);
+                  // Use swagger to get current round ID
+                  roundId = await swagger.getCurrentRoundId(widget.gid); 
+                  // Use swagger to get whose turn it is
+                  String whosturn = await swagger.getWhosTurn(roundId); 
                     if (whosturn != widget.uid) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Es ist nicht dein Zug!')),
@@ -358,38 +385,47 @@ void _initializeGame() async {
                     if (!isAllowed) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Suit constraint! You must play the same suit!'),
+                          content: Text('Karte nicht erlaubt!'), // Added message
                           backgroundColor: Colors.red,
                         ),
                       );
                       return;
                     }
                       _addPlayedCard(details.data);
-                    int urplayernumber = await db.getUrPlayernumber(widget.uid, widget.gid);
+                    int urplayernumber = await swagger.getUrPlayernumber(widget.uid, widget.gid); 
                     if (urplayernumber == 4) {
                       urplayernumber = 0;
                     }
-                    String nextplayer = await db.getNextUserUid(widget.gid, urplayernumber+1);
-                    db.updateWhosTurn(roundId, nextplayer);
-                    db.addPlayInRound(roundId, widget.uid, details.data.cid);
+                    String nextplayer = await swagger.getNextPlayerUid(widget.gid, urplayernumber+1); 
+                    // Use swagger to update whose turn it is
+                    await swagger.updateWhosTurn(roundId, nextplayer); 
+                    await swagger.addPlayInRound(roundId, widget.uid, details.data.cid);
                     _updateCardStates();
                       counter++;
                     if (playedCards.length == 4) {
-                      String currentRoundId = await db.GetRoundID(widget.gid);
-                      db.clearFirstCardForRound(currentRoundId);
-                      
-                      gameLogic.startNewRound(widget.uid);
-                      String winner = await db.getWinningCard(playedCards, widget.gid);
-                      var winnernumber = await db.getUrPlayernumber(winner, widget.gid);
-                      var teammatenumber = (winnernumber + 1) % 4 +1;                      String teammateuid = await db.getNextUserUid(widget.gid, teammatenumber);
-                      await db.savePointsForUsers(playedCards, widget.gid, winner, teammateuid);
-                      
+                      String currentRoundIdFromSwagger = await swagger.getCurrentRoundId(widget.gid); 
+                      db.clearFirstCardForRound(currentRoundIdFromSwagger);
+                      String winner = await swagger.determineWinningCard(widget.gid, playedCards);
+                      var winnernumber = await swagger.getUrPlayernumber(winner, widget.gid); 
+                      int teammatePlayerNumber;
+                      if (winnernumber == 1) { teammatePlayerNumber = 3;}
+                      else if (winnernumber == 2){ teammatePlayerNumber = 4;}
+                      else if (winnernumber == 3) {teammatePlayerNumber = 1;}
+                      else {teammatePlayerNumber = 2;}
+
+                      String teammateuid = await swagger.getNextPlayerUid(widget.gid, teammatePlayerNumber); 
+                      print("Here does the error happen?");
+                      await swagger.savePointsForUsers(widget.gid, gameLogic.buildCardsForSaveWinnerAsMap(playedCards, winner, teammateuid,));
+                      print("Here does the error happen?");
                       setState(() {
                         _scoreRefreshCounter++;
                       });
-                      
-                      gameLogic.startNewRound(widget.uid);
-                      db.updateWinnerDB(winner, roundId);
+                      print("Error here");
+                      await gameLogic.startNewRound(widget.uid); 
+                            
+                      roundId = await swagger.getCurrentRoundId(widget.gid);
+                      print("NVM");
+                      await swagger.updateWinner(roundId, winner);
                       playedCards = [];
                     }
                   },
@@ -452,7 +488,7 @@ void _initializeGame() async {
         if (uid != null)
           FutureBuilder<int>(
             key: ValueKey('score_${uid}_$_scoreRefreshCounter'),
-            future: db.getPlayerScore(uid, widget.gid),
+            future: db.getPlayerScore(uid, widget.gid), // Remains db, no swagger equivalent
             builder: (context, snapshot) {
               final score = snapshot.data ?? 0;
               return Text(

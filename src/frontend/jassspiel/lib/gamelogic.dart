@@ -1,9 +1,12 @@
+import 'package:jassspiel/swaggerConnection.dart';
+
 import 'jasskarte.dart';
 import 'dbConnection.dart';
 import 'spieler.dart';
 class GameLogic{
   String gid;
   DbConnection dbConnection = DbConnection();
+  SwaggerConnection swagger = SwaggerConnection(baseUrl: 'http://localhost:8080');
   GameLogic(this.gid);
   Future<void> initialize() async {
     await dbConnection.waitForFourPlayers(gid);  }
@@ -15,20 +18,46 @@ class GameLogic{
   Future<List<Jasskarte>> shuffleandgetCards(List<Spieler> players, String uid) async {
     for (var player in players) {
       if (player.uid == uid && player.playernumber == 1) {
-          List<Jasskarte> cards = await dbConnection.getAllCards();
           print('Shuffling cards');
-          await dbConnection.shuffleCards(cards, players, gid); 
+          await swagger.shuffleCards(gid); 
       }
     }
-    return await dbConnection.getUrCards(gid, uid); 
+    return await swagger.getUrCards(gid, uid); 
   }
   Future<void> startNewRound(String uid) async {
     List<Spieler> players = await loadPlayers();
     for (var player in players) {
       if (player.uid == uid && player.playernumber == 1) {
-        int whichround = await dbConnection.getWhichRound(gid);
-        await dbConnection.startNewRound(gid, whichround);
+        int whichround = await swagger.getWhichRound(gid);
+        await swagger.startNewRound(gid, whichround);
       }
     }
   }
+  Map<String, dynamic> buildCardsForSaveWinnerAsMap(List<Jasskarte> karten,String winnerUid, String teammateUid,) {
+  return {
+    "playedCards": karten.map((karte) {
+      return {
+        "cardtype": karte.cardType,
+        "cid": karte.cid,
+        "path": karte.path,
+        "symbol": karte.symbol,
+      };
+    }).toList(),
+    "winnerUid": winnerUid,
+    "teammateUid": teammateUid,
+  };
+  }
+      Map<String, dynamic> buildCardsAsMap(List<Jasskarte> karten) {
+  return {
+    "playedCards": karten.map((karte) {
+      return {
+        "cardtype": karte.cardType,
+        "cid": karte.cid,
+        "path": karte.path,
+        "symbol": karte.symbol,
+      };
+    }).toList(),
+  };
+}
+
 }

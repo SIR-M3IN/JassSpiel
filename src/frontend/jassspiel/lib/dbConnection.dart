@@ -203,7 +203,6 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       );
       cards.add(card);
     }
-    print('DEBUG: ${cards.length} Karten für UID $uid in GID $gid geladen');
     return cards;
   }
 
@@ -466,8 +465,10 @@ final Map<String, String> _firstCardsPerRound = {};
 
 Future<void> subscribeToPlayedCards(String currentRid) async{
   if (currentRid.isEmpty) return;
+  // if a previous subscription exists, remove it properly
   if (_playsChannel != null) {
-    await _playsChannel!.unsubscribe();
+    client.removeChannel(_playsChannel!);
+    
   }
   _playsChannel = client
       .channel('public:plays:RID=eq.$currentRid')
@@ -477,17 +478,16 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         table: 'plays',
         callback: (payload) {
         final newRecord = payload.newRecord;
-        if (newRecord['RID'] == currentRid) {
-          final newCid = payload.newRecord?['CID'];
-          if (newCid != null) {
-            newCard.value = newCid;
-            
-            // Check if this is the first card of the round
-            if (!_firstCardsPerRound.containsKey(currentRid)) {
-              _firstCardsPerRound[currentRid] = newCid;
-              firstCard.value = newCid;
-              print('DEBUG: First card of round $currentRid recognized via subscription: $newCid');
-            }
+        // payload.newRecord is non-null when callback runs
+        final newCid = newRecord['CID'];
+        if (newCid != null) {
+          newCard.value = newCid;
+          
+          // Check if this is the first card of the round
+          if (!_firstCardsPerRound.containsKey(currentRid)) {
+            _firstCardsPerRound[currentRid] = newCid;
+            firstCard.value = newCid;
+            print('DEBUG: First card of round $currentRid recognized via subscription: $newCid');
           }
         }
         },
@@ -619,7 +619,6 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         .lt('participants', 4);
     return List<Map<String, dynamic>>.from(response as List);
   }
-
   Future<int> getPlayerScore(String uid, String gid) async {
     final response = await client
         .from('usergame')

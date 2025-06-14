@@ -99,20 +99,22 @@ def games_gid_cards_shuffle_post(gid): #!  # noqa: E501
         print(f"Error in games_gid_cards_shuffle_post: {e}")
         return Error(message="Fehler beim Mischen der Karten."), 500
 
-def games_gid_current_round_id_get(gid):  # noqa: E501
-    """Holt die ID der aktuellen Runde für ein Spiel.
-
-     # noqa: E501
-
-    :param gid: 
-    :type gid: str
-
-    :rtype: Union[GamesGidCurrentRoundIdGet200Response, Tuple[GamesGidCurrentRoundIdGet200Response, int], Tuple[GamesGidCurrentRoundIdGet200Response, int, Dict[str, str]]
-    """
+def games_gid_current_round_id_get(gid: str) -> Tuple[GamesGidCurrentRoundIdGet200Response, int]:
     try:
-        resp = supabase.table('rounds').select('RID').eq('GID', gid).order('whichround', desc=True).limit(1).maybe_single().execute()
-        rid = resp.data.get('RID') if resp and resp.data else ''
+        resp = (
+            supabase
+            .table('rounds')
+            .select('RID')
+            .eq('GID', gid)
+            .order('whichround', desc=False)
+            .limit(1)
+            .maybe_single()
+            .execute()
+        )
+        rid = resp.data.get('RID', '') if resp and resp.data else ''
+        print(f"Found RID: {rid}")
         return GamesGidCurrentRoundIdGet200Response(rid=rid), 200
+
     except Exception as e:
         print(f"Error in games_gid_current_round_id_get: {e}")
         return GamesGidCurrentRoundIdGet200Response(rid=""), 500
@@ -129,7 +131,13 @@ def games_gid_current_round_number_get(gid):  # noqa: E501
     :rtype: Union[GamesGidCurrentRoundNumberGet200Response, Tuple[GamesGidCurrentRoundNumberGet200Response, int], Tuple[GamesGidCurrentRoundNumberGet200Response, int, Dict[str, str]]
     """
     try:
-        resp = supabase.table('rounds').select('whichround').eq('GID', gid).order('whichround', desc=True).limit(1).maybe_single().execute()
+        resp = supabase.table('rounds') \
+                      .select('whichround') \
+                      .eq('GID', gid) \
+                      .order('whichround', desc=False) \
+                      .limit(1) \
+                      .maybe_single() \
+                      .execute()
         which = resp.data.get('whichround') if resp and resp.data else 0
         return GamesGidCurrentRoundNumberGet200Response(whichround=which), 200
     except Exception as e:
@@ -294,49 +302,63 @@ def games_gid_trumpf_suit_put(gid, body):  # noqa: E501
 
 
 def games_gid_update_scores_post(gid, body):  # noqa: E501
-    """Speichert Punkte für Gewinner und Teamkollegen.
-
-     # noqa: E501
-
-    :param gid: 
-    :type gid: str
-    :param save_points_request: 
-    :type save_points_request: dict | bytes
-
-    :rtype: Union[GamesGidUpdateScoresPost200Response, Tuple[GamesGidUpdateScoresPost200Response, int], Tuple[GamesGidUpdateScoresPost200Response, int, Dict[str, str]]
-    """
     try:
+        # 1. Request parsen
         if connexion.request.is_json:
             req = SavePointsRequest.from_dict(connexion.request.get_json())
         else:
-            req = body
+            req = SavePointsRequest.from_dict(body)
+
+        # 2. Punkte berechnen
         total_points = 0
-        # Calculate total points
         for card in (req.played_cards or []):
             cid = card.cid
-            # determine value
-            ct = supabase.table('card').select('cardtype').eq('CID', cid).maybe_single().execute()
-            cardtype = ct.data.get('cardtype') if ct and ct.data else ''
-            tr = supabase.table('cardingames').select('isTrumpf').eq('GID', gid).eq('CID', cid).maybe_single().execute()
-            is_tr = bool(tr.data.get('isTrumpf')) if tr and tr.data else False
-            if is_tr:
-                val_map = {'Ass':11,'König':4,'Ober':3,'Unter':20,'10':10,'9':14}
-            else:
-                val_map = {'Ass':11,'König':4,'Ober':3,'Unter':2,'10':10,'9':0}
+            # Kartentyp
+            ct = supabase.table('card') \
+                        .select('cardtype') \
+                        .eq('CID', cid) \
+                        .maybe_single() \
+                        .execute()
+            cardtype = ct.data.get('cardtype', '') if ct and ct.data else ''
+            # Trumpf?
+            tr = supabase.table('cardingames') \
+                        .select('isTrumpf') \
+                        .eq('GID', gid) \
+                        .eq('CID', cid) \
+                        .maybe_single() \
+                        .execute()
+            is_tr = bool(tr.data.get('isTrumpf', False)) if tr and tr.data else False
+            # Wertetabelle
+            val_map = (
+                {'Ass':11,'König':4,'Ober':3,'Unter':20,'10':10,'9':14}
+                if is_tr
+                else {'Ass':11,'König':4,'Ober':3,'Unter':2,'10':10,'9':0}
+            )
             total_points += val_map.get(cardtype, 0)
-        # Update scores
-        resp = supabase.table('usergame').select('UID,score').eq('GID', gid).in_('UID', [req.winner_uid, req.teammate_uid]).execute()
-        scores = {d['UID']: d.get('score', 0) for d in (resp.data or [])}
+
+        # 3. Alte Scores holen
+        resp = supabase.table('usergame') \
+                       .select('UID,score') \
+                       .eq('GID', gid) \
+                       .in_('UID', [req.winner_uid, req.teammate_uid]) \
+                       .execute()
+        existing = {d['UID']: d.get('score', 0) for d in (resp.data or [])}
+
+        # 4. Upsert der neuen Scores
         updates = [
-            {'GID': gid, 'UID': req.winner_uid, 'score': scores.get(req.winner_uid, 0) + total_points},
-            {'GID': gid, 'UID': req.teammate_uid, 'score': scores.get(req.teammate_uid, 0) + total_points},
+            {'GID': gid, 'UID': req.winner_uid,
+             'score': existing.get(req.winner_uid, 0) + total_points},
+            {'GID': gid, 'UID': req.teammate_uid,
+             'score': existing.get(req.teammate_uid, 0) + total_points},
         ]
         supabase.table('usergame').upsert(updates).execute()
+
+        # 5. Antwort zurückgeben (Param-Name totalPoints)
         return GamesGidUpdateScoresPost200Response(total_points=total_points), 200
+
     except Exception as e:
         print(f"Error in games_gid_update_scores_post: {e}")
-        return GamesGidUpdateScoresPost200Response(total_points=0), 500
-
+        return
 
 def games_gid_users_uid_card_count_get(gid, uid):  # noqa: E501
     """Holt die Anzahl der Karten eines Spielers.
