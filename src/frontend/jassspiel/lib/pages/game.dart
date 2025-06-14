@@ -172,6 +172,8 @@ class _GameScreenState extends State<GameScreen> {
   int counter = 0;
   String currentRoundid = '';
   List<Jasskarte> playedCards = [];
+  List<Spieler> players = []; 
+  int myPlayerNumber = 1; 
   late Future<List<Jasskarte>> playerCards = Future.value([]);
 
 void _addPlayedCard(Jasskarte card) {
@@ -263,7 +265,15 @@ void initState() {
 }
 
 void _initializeGame() async {
-  List<Spieler> players = await db.loadPlayers(widget.gid);
+  List<Spieler> loadedPlayers = await db.loadPlayers(widget.gid);
+  
+  int ownPlayerNumber = await db.getUrPlayernumber(widget.uid, widget.gid);
+  
+  setState(() {
+    players = loadedPlayers; 
+    myPlayerNumber = ownPlayerNumber;
+  });
+  
   String currentRoundid = await db.GetRoundID(widget.gid);
   if (currentRoundid.isEmpty) {
     await gameLogic.startNewRound(widget.uid);
@@ -276,11 +286,10 @@ void _initializeGame() async {
      
     print('currentRoundid: $currentRoundid');
   }
-  db.subscribeToPlayedCards(currentRoundid);
-  List<Jasskarte> cards = [];
+  db.subscribeToPlayedCards(currentRoundid);  List<Jasskarte> cards = [];
   while (cards.length < 9) {
     cards = await gameLogic.shuffleandgetCards(players, widget.uid);
-  }  for (var card in cards) {
+  }for (var card in cards) {
     if (card.symbol == 'Schella' && card.cardType == '6') {
       await gameLogic.startNewRound(widget.uid);
       
@@ -308,22 +317,21 @@ void _initializeGame() async {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Stack(
-              children: [
-                Positioned(
+              children: [                Positioned(
                   top: 16,
                   left: 0,
                   right: 0,
-                  child: Center(child: playerAvatar('Player 1')),
+                  child: Center(child: playerAvatar(getPlayerNameByRelativePosition('top'))),
                 ),
                 Positioned(
                   top: 180,
                   left: 16,
-                  child: playerAvatar('Player 4'),
+                  child: playerAvatar(getPlayerNameByRelativePosition('left')),
                 ),
                 Positioned(
                   top: 180,
                   right: 16,
-                  child: playerAvatar('Player 3'),
+                  child: playerAvatar(getPlayerNameByRelativePosition('right')),
                 ),
 
               Center(
@@ -390,9 +398,7 @@ void _initializeGame() async {
                       ),
                     );
                   },
-                ),
-
-              ),
+                ),                ),
 
 // KI: Kartenhand des Spielers geht nicht fixen bitte 
                 Positioned(
@@ -422,7 +428,6 @@ void _initializeGame() async {
       ),
     );
   }
-
   Widget playerAvatar(String name) {
     return Column(
       children: [
@@ -431,6 +436,32 @@ void _initializeGame() async {
         Text(name, style: const TextStyle(color: Colors.white)),
       ],
     );
+  } 
+  // Helper: get name by relative position around table
+  String getPlayerNameByRelativePosition(String position) {
+    int target;
+    switch (position) {
+      case 'right':
+        target = myPlayerNumber % 4 + 1;
+        break;
+      case 'top':
+        target = (myPlayerNumber + 2) % 4;
+        if (target == 0) target = 4;
+        break;
+      case 'left':
+        target = myPlayerNumber - 1;
+        if (target < 1) target += 4;
+        break;
+      default:
+        return '';
+    }
+
+  for (var player in players) {
+    if (player.playernumber == target) {
+      return player.username;
+    }
+  }
+  return 'Player $target';
   }
 }
 
