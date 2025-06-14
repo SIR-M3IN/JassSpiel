@@ -175,6 +175,7 @@ class _GameScreenState extends State<GameScreen> {
   List<Spieler> players = []; 
   int myPlayerNumber = 1; 
   late Future<List<Jasskarte>> playerCards = Future.value([]);
+  int _scoreRefreshCounter = 0;
 
 void _addPlayedCard(Jasskarte card) {
   setState(() {
@@ -327,17 +328,17 @@ void _initializeGame() async {
                   top: 16,
                   left: 0,
                   right: 0,
-                  child: Center(child: playerAvatar(getPlayerNameByRelativePosition('top'))),
+                  child: Center(child: playerAvatar(getPlayerNameByRelativePosition('top'), uid: getPlayerUidByRelativePosition('top'))),
                 ),
                 Positioned(
                   top: 180,
                   left: 16,
-                  child: playerAvatar(getPlayerNameByRelativePosition('left')),
+                  child: playerAvatar(getPlayerNameByRelativePosition('left'), uid: getPlayerUidByRelativePosition('left')),
                 ),
                 Positioned(
                   top: 180,
                   right: 16,
-                  child: playerAvatar(getPlayerNameByRelativePosition('right')),
+                  child: playerAvatar(getPlayerNameByRelativePosition('right'), uid: getPlayerUidByRelativePosition('right')),
                 ),
 
               Center(
@@ -380,9 +381,13 @@ void _initializeGame() async {
                       gameLogic.startNewRound(widget.uid);
                       String winner = await db.getWinningCard(playedCards, widget.gid);
                       var winnernumber = await db.getUrPlayernumber(winner, widget.gid);
-                      var teammatenumber = (winnernumber + 1) % 4 +1;
-                      String teammateuid = await db.getNextUserUid(widget.gid, teammatenumber);
+                      var teammatenumber = (winnernumber + 1) % 4 +1;                      String teammateuid = await db.getNextUserUid(widget.gid, teammatenumber);
                       await db.savePointsForUsers(playedCards, widget.gid, winner, teammateuid);
+                      
+                      setState(() {
+                        _scoreRefreshCounter++;
+                      });
+                      
                       gameLogic.startNewRound(widget.uid);
                       db.updateWinnerDB(winner, roundId);
                       playedCards = [];
@@ -438,16 +443,30 @@ void _initializeGame() async {
         ),
       ),
     );
-  }
-  Widget playerAvatar(String name) {
+  }  Widget playerAvatar(String name, {String? uid}) {
     return Column(
       children: [
         const CircleAvatar(radius: 24, child: Icon(Icons.person)),
         const SizedBox(height: 4),
         Text(name, style: const TextStyle(color: Colors.white)),
+        if (uid != null)
+          FutureBuilder<int>(
+            key: ValueKey('score_${uid}_$_scoreRefreshCounter'),
+            future: db.getPlayerScore(uid, widget.gid),
+            builder: (context, snapshot) {
+              final score = snapshot.data ?? 0;
+              return Text(
+                'Punkte: $score',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              );
+            },
+          ),
       ],
     );
-  } 
+  }
   // Helper: get name by relative position around table
   String getPlayerNameByRelativePosition(String position) {
     int target;
@@ -466,13 +485,38 @@ void _initializeGame() async {
       default:
         return '';
     }
-
   for (var player in players) {
     if (player.playernumber == target) {
       return player.username;
     }
   }
   return 'Player $target';
+  }
+
+  String? getPlayerUidByRelativePosition(String position) {
+    int target;
+    switch (position) {
+      case 'right':
+        target = myPlayerNumber % 4 + 1;
+        break;
+      case 'top':
+        target = (myPlayerNumber + 2) % 4;
+        if (target == 0) target = 4;
+        break;
+      case 'left':
+        target = myPlayerNumber - 1;
+        if (target < 1) target += 4;
+        break;
+      default:
+        return null;
+    }
+
+    for (var player in players) {
+      if (player.playernumber == target) {
+        return player.uid;
+      }
+    }
+    return null;
   }
 }
 
