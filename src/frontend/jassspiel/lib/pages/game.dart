@@ -178,6 +178,7 @@ class _GameScreenState extends State<GameScreen> {
   List<Spieler> players = []; 
   int myPlayerNumber = 1; 
   late Future<List<Jasskarte>> playerCards = Future.value([]);
+  
   int _scoreRefreshCounter = 0;
 
 void _addPlayedCard(Jasskarte card) {
@@ -198,14 +199,20 @@ Future<bool> _isCardAllowed(Jasskarte card) async {
   if (firstCard == null) {
     return true;
   }
+  // Always allow trumpf
   bool isTrumpf = await db.isTrumpf(card.cid, widget.gid);
   if (isTrumpf) return true;
-  List<Jasskarte> myCards = await swagger.getUrCards(widget.gid, widget.uid);
+
+  // Check if hand has any non-trumpf card matching the first card's suit
+  final hand = await playerCards;
   bool hasSameSuit = false;
-  for (var k in myCards) {
+  for (var k in hand) {
     if (k.symbol == firstCard!.symbol) {
-      hasSameSuit = true;
-      break;
+      final isKTrumpf = await db.isTrumpf(k.cid, widget.gid);
+      if (!isKTrumpf) {
+        hasSameSuit = true;
+        break;
+      }
     }
   }
   if (hasSameSuit) {
@@ -226,7 +233,6 @@ void _handleNewCardFromListener() async {
   print("New card received");
   final cardCid = db.newCard.value; // Remains db (realtime listener)
   if (cardCid != null) {
-
     if (playedCards.any((existingCard) => existingCard.cid == cardCid)) {
       if (playedCards.length == 4) {
       await Future.delayed(const Duration(seconds: 2));
@@ -444,16 +450,25 @@ void _initializeGame() async {
 
                       String teammateuid = await swagger.getNextPlayerUid(widget.gid, teammatePlayerNumber); 
                       print("Here does the error happen?");
+                      await swagger.updateWinner(roundId, winner);
                       await swagger.savePointsForUsers(widget.gid, gameLogic.buildCardsForSaveWinnerAsMap(playedCards, winner, teammateuid,));
                       print("Here does the error happen?");
                       setState(() {
                         _scoreRefreshCounter++;
                       });
                       print("Error here");
+
                       await gameLogic.startNewRound(widget.uid); 
+                      // Warte kurz, bis die neue Runde auch wirklich gestartet wurde
+                      String prevRoundId = roundId;
+                      String newRoundId;
+                      do {
+                        await Future.delayed(const Duration(milliseconds: 500));
+                        newRoundId = await swagger.getCurrentRoundId(widget.gid);
+                      } while (newRoundId == prevRoundId || newRoundId.isEmpty);
+                      roundId = newRoundId;
                       roundId = await swagger.getCurrentRoundId(widget.gid);
                       print("NVM");
-                      await swagger.updateWinner(roundId, winner);
                       await swagger.updateWhosTurn(roundId, winner); 
                       playedCards = [];
                       firstCard = null;
