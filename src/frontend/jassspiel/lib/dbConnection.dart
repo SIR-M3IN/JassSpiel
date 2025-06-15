@@ -315,11 +315,11 @@ Future<int> getCardWorth(String cid, String gid) async {
         case 'Ober':
           return 17;
         case 'Unter':
-          return 16;
+          return 21;
         case '10':
           return 15;
         case '9':
-          return 14;
+          return 20;
         case '8':
           return 13;
         case '7':
@@ -381,21 +381,24 @@ Future<int> getCardWorth(String cid, String gid) async {
 
     return totalPoints;
   }
-  Future<String> getWinningCard(List<Jasskarte> cards, String gid) async {
+  Future<String> getWinningCard(List<Jasskarte> cards, String gid, Jasskarte firstCard) async {
     Jasskarte? winningCard;
     for (var card in cards) {
-      print(card);
+      if (card.symbol != firstCard.symbol && await isTrumpf(card.cid, gid) != true) {
+        continue;
+      }
       if (winningCard == null || await getCardWorth(card.cid, gid) > await getCardWorth(winningCard.cid, gid)) {
         winningCard = card;
+        print('Winning Card: ${winningCard.cid} with worth ${await getCardWorth(winningCard.cid, gid)} and IstTrumpf: ${await isTrumpf(winningCard.cid, gid)}');
       }
     }
-
     final response = await client
         .from('cardingames')
         .select('UID')
         .eq('CID', winningCard != null ? winningCard.cid : '')
         .eq('GID', gid)
         .maybeSingle();
+    print('WINNINGUID: ${response?['UID']}');
     return response?['UID'] as String? ?? '';
   }
   Future<void> updateWinnerDB(String uid, String rid) async{
