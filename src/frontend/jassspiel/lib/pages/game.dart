@@ -258,10 +258,18 @@ void _handleNewCardFromListener() async {
       firstCard ??= newCard; 
 
     });
-    
-    _updateCardStates();
+      _updateCardStates();
       if (playedCards.length == 4) {
-      await Future.delayed(const Duration(seconds: 2));
+      String winner = await swagger.determineWinningCard(widget.gid, playedCards);
+      
+      _showTrickWinnerPopup(winner);
+      
+      await Future.delayed(const Duration(seconds: 3));
+      
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
       if (!mounted) return;
       setState(() {
         playedCards = [];
@@ -447,11 +455,19 @@ void _initializeGame() async {
                     await swagger.updateWhosTurn(roundId, nextplayer); 
                     await swagger.addPlayInRound(roundId, widget.uid, details.data.cid);
                     _updateCardStates();
-                      counter++;
-                    if (playedCards.length == 4) {
+                      counter++;                    if (playedCards.length == 4) {
                       log.i('Round complete with 4 cards, determining winner');
                       String winner = await swagger.determineWinningCard(widget.gid, playedCards);
                       log.i('Round winner determined: $winner');
+                      
+                      _showTrickWinnerPopup(winner);
+                      
+                      await Future.delayed(const Duration(seconds: 3));
+                      
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                      }
+                      
                       var winnernumber = await swagger.getUrPlayernumber(winner, widget.gid); 
                       int teammatePlayerNumber;
                       if (winnernumber == 1) { teammatePlayerNumber = 3;}
@@ -659,6 +675,85 @@ void _initializeGame() async {
       }
     }
     return 'Spieler';
+  }
+
+  // Zeigt ein Popup mit dem Stichgewinner
+  Future<void> _showTrickWinnerPopup(String winnerUid) async {
+    String winnerName = _getPlayerNameByUid(winnerUid);
+    bool isMyWin = winnerUid == widget.uid;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isMyWin 
+                  ? [Colors.green.shade600, Colors.green.shade800]
+                  : [Colors.blue.shade600, Colors.blue.shade800],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isMyWin ? Icons.emoji_events : Icons.star,
+                  size: 60,
+                  color: Colors.yellow.shade300,
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  'Stich gewonnen!',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  isMyWin ? 'Du hast den Stich gewonnen!' : '$winnerName hat den Stich gewonnen!',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Nächste Runde startet...',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
