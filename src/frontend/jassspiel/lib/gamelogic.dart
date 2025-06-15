@@ -25,10 +25,14 @@ class GameLogic {
     for (var player in players) {
       if (player.uid == uid && player.playernumber == 1) {
         log.i('Player 1 shuffling cards for game $gid');
-        await swagger.shuffleCards(gid);
+        //await swagger.shuffleCards(gid);
+        List<Jasskarte> cards = await dbConnection.getAllCards();
+        await dbConnection.shuffleCards(cards,players,gid);
+
       }
     }
-    return await swagger.getUrCards(gid, uid);
+    //return await swagger.getUrCards(gid, uid);
+    return dbConnection.getUrCards(gid, uid);
   }
 
   Future<void> startNewRound(String uid) async {
@@ -36,9 +40,11 @@ class GameLogic {
     List<Spieler> players = await loadPlayers();
     for (var player in players) {
       if (player.uid == uid && player.playernumber == 1) {
-        int whichround = await swagger.getWhichRound(gid);
+        //int whichround = await swagger.getWhichRound(gid);
+        int whichround = await dbConnection.getWhichRound(gid);
         log.i('Player 1 starting round $whichround for game $gid');
-        await swagger.startNewRound(gid, whichround);
+        //await swagger.startNewRound(gid, whichround);
+        await dbConnection.startNewRound(gid, whichround);
       }
     }
   }

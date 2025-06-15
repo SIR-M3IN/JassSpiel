@@ -174,7 +174,7 @@ class GameScreen extends StatefulWidget {
 }
 class _GameScreenState extends State<GameScreen> {
   DbConnection db = DbConnection();
-  SwaggerConnection swagger = SwaggerConnection(baseUrl: 'http://localhost:8080'); // Initialize swagger
+  //SwaggerConnection swagger = SwaggerConnection(baseUrl: 'http://localhost:8080'); // Initialize swagger
   late GameLogic gameLogic;
   final log = getLogger();
   int counter = 0;
