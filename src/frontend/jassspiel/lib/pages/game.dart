@@ -339,31 +339,60 @@ void _initializeGame() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 38, 82, 7),
-      body: Center(
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF5D4037),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Stack(
-              children: [                Positioned(
+      // Updated background to a gradient
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.deepPurple,
+              Colors.indigo,
+              Colors.blue,
+            ],
+          ),
+        ),
+        child: Center(
+          child: AspectRatio(
+            aspectRatio: 16 / 9, // Maintain aspect ratio for the game table
+            child: Container(
+              // Game table styling
+              padding: const EdgeInsets.all(16.0), // Add some padding
+              decoration: BoxDecoration(
+                color: Colors.green.shade800, // A richer green for the table
+                borderRadius: BorderRadius.circular(20), // More rounded corners
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    spreadRadius: 5,
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+                border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+              ),
+              child: Stack(
+                children: [                Positioned(
                   top: 16,
                   left: 0,
                   right: 0,
                   child: Center(child: playerAvatar(getPlayerNameByRelativePosition('top'), uid: getPlayerUidByRelativePosition('top'))),
                 ),
-                Positioned(
-                  top: 180,
-                  left: 16,
-                  child: playerAvatar(getPlayerNameByRelativePosition('left'), uid: getPlayerUidByRelativePosition('left')),
+                // KI: Zentriere den linken Spieler vertikal
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: playerAvatar(getPlayerNameByRelativePosition('left'), uid: getPlayerUidByRelativePosition('left')),
+                  ),
                 ),
-                Positioned(
-                  top: 180,
-                  right: 16,
-                  child: playerAvatar(getPlayerNameByRelativePosition('right'), uid: getPlayerUidByRelativePosition('right')),
+                // KI: Zentriere den rechten Spieler vertikal
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: playerAvatar(getPlayerNameByRelativePosition('right'), uid: getPlayerUidByRelativePosition('right')),
+                  ),
                 ),
 
               Center(
@@ -433,10 +462,18 @@ void _initializeGame() async {
                     return Container(
                       width: 330,
                       height: 130,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.all(8), // Added padding
                       decoration: BoxDecoration(
-                        color: Colors.black26,
+                        color: Colors.black.withOpacity(0.4), // Darker, more distinct area
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 5,
+                            offset: const Offset(0,2),
+                          )
+                        ]
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -478,13 +515,39 @@ void _initializeGame() async {
           ),
         ),
       ),
+      ),
     );
-  }  Widget playerAvatar(String name, {String? uid}) {
+  }
+
+  Widget playerAvatar(String name, {String? uid}) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const CircleAvatar(radius: 24, child: Icon(Icons.person)),
-        const SizedBox(height: 4),
-        Text(name, style: const TextStyle(color: Colors.white)),
+        CircleAvatar(
+          radius: 28, // Slightly larger avatar
+          backgroundColor: Colors.white.withOpacity(0.2),
+          child: CircleAvatar(
+            radius: 25,
+            backgroundColor: Colors.deepPurple.shade300,
+            child: const Icon(Icons.person, color: Colors.white, size: 30),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ),
         if (uid != null)
           FutureBuilder<int>(
             key: ValueKey('score_${uid}_$_scoreRefreshCounter'),
@@ -583,25 +646,28 @@ class CardHand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 130,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Center(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: cards.map((card) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: SizedBox(
-                    width: 60,
-                    height: 90,
-                    child: CardWidget(card: card),
-                  ),
-                );
-              }).toList(),
+    return Container( // Wrap with a container for potential styling
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: SizedBox(
+        height: 130, // Keep height consistent
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16), // Adjusted padding
+          child: Center(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: cards.map((card) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4), // Reduced horizontal padding
+                    child: SizedBox(
+                      width: 70, // Slightly larger cards in hand
+                      height: 100,
+                      child: CardWidget(card: card),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),
@@ -620,35 +686,41 @@ class CardWidget extends StatelessWidget {
     return Draggable<Jasskarte>(
       data: card,
       feedback: Transform.scale(
-        scale: 1.2,
-        child: Image.asset(
-          card.path,
-          width: 60,
-          height: 90,
-          fit: BoxFit.cover,
+        scale: 1.25, // Slightly larger feedback
+        child: Material( // Added Material for elevation and shadow
+          elevation: 8.0,
+          shadowColor: Colors.black.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            card.path,
+            width: 60,
+            height: 90,
+            fit: BoxFit.cover,
+          ),
         ),
       ),
       childWhenDragging: Container(
-        width: 60,
-        height: 90,
+        width: 70, // Match new card size
+        height: 100, // Match new card size
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
-          color: Colors.grey,
+          borderRadius: BorderRadius.circular(8), // Consistent rounding
+          color: Colors.blueGrey.withOpacity(0.5),
+          border: Border.all(color: Colors.white.withOpacity(0.3))
         ),
       ),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8), // Consistent rounding
           boxShadow: [
             BoxShadow(
-              color: Colors.black,
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.7), // Stronger shadow for cards
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8), // Consistent rounding
           child: Image.asset(
             card.path,
             fit: BoxFit.cover,
