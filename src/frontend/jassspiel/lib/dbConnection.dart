@@ -107,7 +107,7 @@ class DbConnection {
 Future<List<Jasskarte>> getPlayedCards(String rid) async {
   final response = await client
       .from('plays')
-      .select('CID, card(symbol, cardtype)')
+      .select('CID, card(symbol, cardtype), rounds!inner(GID)')
       .eq('RID', rid);
 
   print('DEBUG getPlayedCards raw response: $response');
