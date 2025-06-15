@@ -226,11 +226,6 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
         .select('CID')
         .eq('RID', rid);
 
-    if (existingPlays.isEmpty) {
-      _firstCardsPerRound[rid] = cid;
-      firstCard.value = cid;
-      print('DEBUG: First card of round $rid stored: $cid');
-    }
     await client.from('plays').insert({
       'RID': rid,
       'UID': uid,
@@ -253,39 +248,8 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       return '';
     }
   }  
-  Future<String?> getFirstCardInRound(String rid) async {
-    if (_firstCardsPerRound.containsKey(rid)) {
-      return _firstCardsPerRound[rid];
-    }
-    
-    final response = await client
-        .from('plays')
-        .select('CID')
-        .eq('RID', rid)
-        .limit(1)
-        .maybeSingle();
-    
-    if (response != null) {
-      final firstCardCid = response['CID'] as String;
-      _firstCardsPerRound[rid] = firstCardCid;
-      return firstCardCid;
-    }
-    
-    return null;
-  }
 
-  Future<Jasskarte?> getFirstCardInRoundAsCard(String rid) async {
-    final cid = await getFirstCardInRound(rid);
-    if (cid != null) {
-      try {
-        return await getCardByCid(cid);
-      } catch (e) {
-        print('ERROR: Could not load first card: $e');
-        return null;
-      }
-    }
-    return null;
-  }
+
   Future<bool> isTrumpf(String cid, String gid) async {
     final response = await client
       .from('cardingames')
@@ -460,8 +424,6 @@ Future<int> getCardWorth(String cid, String gid) async {
   
 RealtimeChannel? _playsChannel;
 final ValueNotifier<String?> newCard = ValueNotifier(null);
-final ValueNotifier<String?> firstCard = ValueNotifier(null);
-final Map<String, String> _firstCardsPerRound = {};
 
 Future<void> subscribeToPlayedCards(String currentRid) async{
   if (currentRid.isEmpty) return;
@@ -483,12 +445,6 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         if (newCid != null) {
           newCard.value = newCid;
           
-          // Check if this is the first card of the round
-          if (!_firstCardsPerRound.containsKey(currentRid)) {
-            _firstCardsPerRound[currentRid] = newCid;
-            firstCard.value = newCid;
-            print('DEBUG: First card of round $currentRid recognized via subscription: $newCid');
-          }
         }
         },
   
@@ -514,8 +470,6 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       'whichround': whichround + 1,
     });    
 
-    firstCard.value = null;
-    print('DEBUG: First card notifier reset for new round');
   }
 
   Future<int> getWhichRound(String gid) async {
@@ -597,20 +551,8 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       }
       print('DEBUG: ${trumpfCardIds.length} cards of $trumpf for GID $gid set to true');
     }
-  }  void clearFirstCardCache() {
-    _firstCardsPerRound.clear();
-    firstCard.value = null;
-    print('DEBUG: First card cache cleared');
-  }
+  } 
 
-  void clearFirstCardForRound(String rid) {
-    _firstCardsPerRound.remove(rid);
-
-    if (firstCard.value != null && _firstCardsPerRound[rid] == firstCard.value) {
-      firstCard.value = null;
-    }
-    print('DEBUG: First card cleared for round $rid');
-  }
   Future<List<Map<String, dynamic>>> getOpenGames() async {
     final response = await client
         .from('games')

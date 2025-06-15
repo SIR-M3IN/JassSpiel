@@ -172,6 +172,7 @@ class _GameScreenState extends State<GameScreen> {
   SwaggerConnection swagger = SwaggerConnection(baseUrl: 'http://localhost:8080'); // Initialize swagger
   late GameLogic gameLogic;
   int counter = 0;
+  Jasskarte? firstCard; // First card played in the round
   String currentRoundid = '';
   List<Jasskarte> playedCards = [];
   List<Spieler> players = []; 
@@ -192,34 +193,28 @@ void _addPlayedCard(Jasskarte card) {
   });
 }
 
-Future<bool> _isCardAllowed(Jasskarte card, String roundId) async {
-  String? firstCardCid = await swagger.getFirstCardCid(roundId); 
-  
-  if (firstCardCid == null || firstCardCid.isEmpty) { // also check for empty string
-    return true;
-  }
-  
-  Jasskarte? firstCard = await swagger.getCardByCid(firstCardCid);
-
+Future<bool> _isCardAllowed(Jasskarte card) async {
+  print("Checking if card is allowed (local only): ${card.cid}");
   if (firstCard == null) {
-    return true; 
-  }
-  
-  bool isCardTrumpf = await db.isTrumpf(card.cid, widget.gid);
-  if (isCardTrumpf) {
     return true;
   }
-  
-  List<Jasskarte> myCards = await swagger.getUrCards(widget.gid, widget.uid); 
-  
-  // Add null check for firstCard before accessing its symbol
-  bool hasSameSuit = myCards.any((k) => k.symbol == firstCard.symbol); 
-  
+  bool isTrumpf = await db.isTrumpf(card.cid, widget.gid);
+  if (isTrumpf) return true;
+  List<Jasskarte> myCards = await swagger.getUrCards(widget.gid, widget.uid);
+  bool hasSameSuit = false;
+  for (var k in myCards) {
+    if (k.symbol == firstCard!.symbol) {
+      hasSameSuit = true;
+      break;
+    }
+  }
   if (hasSameSuit) {
-    return card.symbol == firstCard.symbol;
+    return card.symbol == firstCard!.symbol;
   }
   return true;
 }
+
+
 
 void _updateCardStates() {
   setState(() {
@@ -231,6 +226,7 @@ void _handleNewCardFromListener() async {
   print("New card received");
   final cardCid = db.newCard.value; // Remains db (realtime listener)
   if (cardCid != null) {
+
     if (playedCards.any((existingCard) => existingCard.cid == cardCid)) {
       if (playedCards.length == 4) {
       await Future.delayed(const Duration(seconds: 2));
@@ -247,19 +243,17 @@ void _handleNewCardFromListener() async {
 
     setState(() {
       playedCards.add(newCard);
+      firstCard ??= newCard; 
+
     });
     
     _updateCardStates();
       if (playedCards.length == 4) {
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
-      
-      // Use swagger to get current round ID
-      String currentRoundId = await swagger.getCurrentRoundId(widget.gid); 
-      db.clearFirstCardForRound(currentRoundId); // Remains db (local cache)
-      
       setState(() {
         playedCards = [];
+        firstCard = null;
       });
       _updateCardStates();
     }
@@ -271,33 +265,26 @@ void _handleNewCardFromListener() async {
 @override
 void initState() {
   super.initState();
-  gameLogic = GameLogic(widget.gid); // GameLogic might also need refactoring if it uses db directly
+  gameLogic = GameLogic(widget.gid); 
   _initializeGame();
-  db.newCard.addListener(_handleNewCardFromListener); // Remains db (realtime listener)
+  db.newCard.addListener(_handleNewCardFromListener); 
 
 }
 
 void _initializeGame() async {
-  // Use swagger to load players
   List<Spieler> loadedPlayers = await swagger.loadPlayers(widget.gid); 
-  
-  // Use swagger to get own player number
-  int ownPlayerNumber = await swagger.getUrPlayernumber(widget.uid, widget.gid); 
+    int ownPlayerNumber = await swagger.getUrPlayernumber(widget.uid, widget.gid); 
   
   setState(() {
     players = loadedPlayers; 
     myPlayerNumber = ownPlayerNumber;
   });
-  
-  // Use swagger to get current round ID
-  String currentRoundIdValue = await swagger.getCurrentRoundId(widget.gid); 
+    String currentRoundIdValue = await swagger.getCurrentRoundId(widget.gid); 
   setState(() {
     currentRoundid = currentRoundIdValue;
   });
 
   if (currentRoundid.isEmpty) {
-    // gameLogic.startNewRound might call swagger.startNewRound or db.startNewRound
-    // Assuming gameLogic.startNewRound is already using swagger or is intended to be refactored separately.
     print("HERE");
     await gameLogic.startNewRound(widget.uid); 
     print('gid: ${widget.gid}');
@@ -312,22 +299,18 @@ void _initializeGame() async {
      
     print('currentRoundid: $currentRoundid');
   }
-  db.subscribeToPlayedCards(currentRoundid); // Remains db (realtime listener)
+  db.subscribeToPlayedCards(currentRoundid);
   List<Jasskarte> cards = [];
-  // gameLogic.shuffleandgetCards might use swagger or db.
-  // Assuming it's either using swagger or will be refactored.
+
   while (cards.length < 9) {
     cards = await gameLogic.shuffleandgetCards(players, widget.uid);
   }
   for (var card in cards) {
     if (card.symbol == 'Schella' && card.cardType == '6') {      
-      // Use swagger to get current round ID
       String roundId = await swagger.getCurrentRoundId(widget.gid); 
-      // Use swagger to update whose turn it is
       await swagger.updateWhosTurn(roundId, widget.uid); 
       String? selectedTrumpf = await showTrumpfDialog(context, playerCards: cards);
       if (selectedTrumpf != null) {
-        // Use swagger to update trumpf
         await swagger.updateTrumpf(widget.gid, selectedTrumpf); 
       }
     }
@@ -339,7 +322,6 @@ void _initializeGame() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Updated background to a gradient
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -356,7 +338,6 @@ void _initializeGame() async {
           child: AspectRatio(
             aspectRatio: 16 / 9, // Maintain aspect ratio for the game table
             child: Container(
-              // Game table styling
               padding: const EdgeInsets.all(16.0), // Add some padding
               decoration: BoxDecoration(
                 color: Colors.green.shade800, // A richer green for the table
@@ -378,30 +359,22 @@ void _initializeGame() async {
                   right: 0,
                   child: Center(child: playerAvatar(getPlayerNameByRelativePosition('top'), uid: getPlayerUidByRelativePosition('top'))),
                 ),
-                // KI: Zentriere den linken Spieler vertikal
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16.0),
-                    child: playerAvatar(getPlayerNameByRelativePosition('left'), uid: getPlayerUidByRelativePosition('left')),
-                  ),
+                Positioned(
+                  top: 180,
+                  left: 16,
+                  child: playerAvatar(getPlayerNameByRelativePosition('left'), uid: getPlayerUidByRelativePosition('left')),
                 ),
-                // KI: Zentriere den rechten Spieler vertikal
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: playerAvatar(getPlayerNameByRelativePosition('right'), uid: getPlayerUidByRelativePosition('right')),
-                  ),
+                Positioned(
+                  top: 180,
+                  right: 16,
+                  child: playerAvatar(getPlayerNameByRelativePosition('right'), uid: getPlayerUidByRelativePosition('right')),
                 ),
 
               Center(
                 child:                DragTarget<Jasskarte>(
                   onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
                   String roundId = '';
-                  // Use swagger to get current round ID
                   roundId = await swagger.getCurrentRoundId(widget.gid); 
-                  // Use swagger to get whose turn it is
                   String whosturn = await swagger.getWhosTurn(roundId); 
                     if (whosturn != widget.uid) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -409,8 +382,7 @@ void _initializeGame() async {
                       );
                       return;
                     }
-                      // Suit constraint rule check
-                    bool isAllowed = await _isCardAllowed(details.data, roundId);
+                    bool isAllowed = await _isCardAllowed(details.data);
                     if (!isAllowed) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -426,14 +398,11 @@ void _initializeGame() async {
                       urplayernumber = 0;
                     }
                     String nextplayer = await swagger.getNextPlayerUid(widget.gid, urplayernumber+1); 
-                    // Use swagger to update whose turn it is
                     await swagger.updateWhosTurn(roundId, nextplayer); 
                     await swagger.addPlayInRound(roundId, widget.uid, details.data.cid);
                     _updateCardStates();
                       counter++;
                     if (playedCards.length == 4) {
-                      String currentRoundIdFromSwagger = await swagger.getCurrentRoundId(widget.gid); 
-                      db.clearFirstCardForRound(currentRoundIdFromSwagger);
                       String winner = await swagger.determineWinningCard(widget.gid, playedCards);
                       var winnernumber = await swagger.getUrPlayernumber(winner, widget.gid); 
                       int teammatePlayerNumber;
@@ -451,11 +420,12 @@ void _initializeGame() async {
                       });
                       print("Error here");
                       await gameLogic.startNewRound(widget.uid); 
-                            
                       roundId = await swagger.getCurrentRoundId(widget.gid);
                       print("NVM");
                       await swagger.updateWinner(roundId, winner);
+                      await swagger.updateWhosTurn(roundId, winner); 
                       playedCards = [];
+                      firstCard = null;
                     }
                   },
                   builder: (context, candidateData, rejectedData) {

@@ -70,15 +70,11 @@ def games_gid_cards_shuffle_post(gid): #!  # noqa: E501
     :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
     """
     try:
-        # Clear previous assignments
         supabase.table('cardingames').delete().eq('GID', gid).execute()
-        # Get all card IDs
         cards_resp = supabase.table('card').select('CID').execute()
         cids = [d['CID'] for d in (cards_resp.data or [])]
-        # Get all players in game
         players_resp = supabase.table('usergame').select('UID').eq('GID', gid).execute()
         uids = [d['UID'] for d in (players_resp.data or [])]
-        # Shuffle and prepare batch insert records
         random.shuffle(cids)
         records = []
         if uids and cids:
