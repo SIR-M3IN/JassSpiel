@@ -356,31 +356,30 @@ Future<int> getCardWorth(String cid, String gid) async {
   }
   Future<int> savePointsForUsers(List<Jasskarte> cards, String gid, String winnerUid, String teammateUid) async {
     int totalPoints = 0;
-    print(cards);
     for (var card in cards) {
       totalPoints += await getCardValue(card.cid, gid);
     }
-    print("Total Points: $totalPoints");
-    // print("WinnerUID: $winnerUid");
-    // print("GID: $gid");
-    // print("TeammateUID: $teammateUid");
     final response = await client
         .from('usergame')
         .select('UID, score')
         .eq('GID', gid)
         .or('UID.eq.$winnerUid,UID.eq.$teammateUid');
-        
-    print("RESPONSE: $response");
+
     final scores = {for (var item in response) item['UID']: item['score'] as int? ?? 0};
-    print("Score $scores");
-    await client.from('usergame').upsert([
-      {'UID': winnerUid, 'GID': gid, 'score': scores[winnerUid]! + totalPoints},
-      {'UID': teammateUid, 'GID': gid, 'score': scores[teammateUid]! + totalPoints},
-    ]);
-    print("here");
+
+    final winnerUpdate = await client.from('usergame')
+        .update({'score': (scores[winnerUid]! + totalPoints).toInt()})
+        .match({'UID': winnerUid, 'GID': gid});
+    print("Winner update: $winnerUpdate");
+
+    final teammateUpdate = await client.from('usergame')
+        .update({'score': (scores[teammateUid]! + totalPoints).toInt()})
+        .match({'UID': teammateUid, 'GID': gid});
+    print("Teammate update: $teammateUpdate");
 
     return totalPoints;
-  }
+  }  
+  
   Future<String> getWinningCard(List<Jasskarte> cards, String gid, Jasskarte firstCard) async {
     Jasskarte? winningCard;
     for (var card in cards) {
