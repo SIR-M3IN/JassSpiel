@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jassspiel/dbConnection.dart';
-
+import 'package:jassspiel/logger.util.dart';
 
 // KI: Update UI
 
@@ -15,29 +15,34 @@ class StartPage extends StatefulWidget {
 class _StartPageState extends State<StartPage> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
+  final log = getLogger();
   bool _isLoading = false;
   Future<List<Map<String, dynamic>>>? _openGamesFuture;
 
   @override
   void initState() {
     super.initState();
+    log.i('Start page initialized');
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final prefs = await SharedPreferences.getInstance();
       final savedName = prefs.getString('name');
       if (savedName != null) {
         _nameController.text = savedName;
+        log.d('Loaded saved name: $savedName');
       }
     });
     _openGamesFuture = _fetchOpenGames();
   }
 
   Future<List<Map<String, dynamic>>> _fetchOpenGames() {
+    log.d('Fetching open games');
     return DbConnection().getOpenGames();
   }
 
   Future<void> _saveName(String name) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('name', name);
+    log.d('Saved player name: $name');
   }
   void _showSnack(String msg, [Color? color]) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -306,7 +311,9 @@ class _StartPageState extends State<StartPage> {
   void _onStartPressed() async {
     setState(() => _isLoading = true);
     final name = _nameController.text.trim();
+    log.i('Starting new game for player: $name');
     if (name.isEmpty) {
+      log.w('Attempted to start game without name');
       _showSnack('Bitte zuerst einen Namen eingeben.', Colors.red);
       setState(() => _isLoading = false);
       return;
@@ -314,12 +321,16 @@ class _StartPageState extends State<StartPage> {
     final db = DbConnection();
     try {
       final uid = await db.getOrCreateUid();
+      log.d('Retrieved/created UID: $uid');
       await db.saveUserIfNeeded(uid, name);
       final gid = await db.createGame();
+      log.i('Created new game with GID: $gid');
       await db.addPlayerToGame(gid, uid, name);
       if (!mounted) return;
+      log.d('Navigating to game initialization');
       Navigator.pushNamed(context, '/init', arguments: {'gid': gid, 'uid': uid});
     } catch (e) {
+      log.e('Error starting game: $e');
       _showSnack('Fehler: $e', Colors.red);
     } finally {
       setState(() => _isLoading = false);
@@ -329,19 +340,25 @@ class _StartPageState extends State<StartPage> {
   void _onJoinPressed() async {
     final name = _nameController.text.trim();
     final code = _codeController.text.trim();
+    log.i('Attempting to join game: $code with player: $name');
     if (name.isEmpty || code.isEmpty) {
+      log.w('Missing name or code for joining game');
       _showSnack('Name und Partycode sind erforderlich.', Colors.red);
       return;
     }
     final db = DbConnection();
     final uid = await db.getOrCreateUid();
+    log.d('Retrieved UID for joining: $uid');
     await db.saveUserIfNeeded(uid, name);
     final ok = await db.joinGame(code);
     if (!ok) {
+      log.w('Failed to join game - room not found: $code');
       _showSnack('Raum mit Code $code nicht gefunden.', Colors.red);
       return;
     }
+    log.i('Successfully joined game: $code');
     await db.addPlayerToGame(code, uid, name);
+    log.d('Added player to game, navigating to initialization');
     Navigator.pushNamed(context, '/init', arguments: {'gid': code, 'uid': uid});
   }
 

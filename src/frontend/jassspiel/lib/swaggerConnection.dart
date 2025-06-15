@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'jasskarte.dart';
-import 'spieler.dart';
+import 'package:jassspiel/jasskarte.dart';
+import 'package:jassspiel/spieler.dart';
+import 'package:jassspiel/logger.util.dart';
 
 class SwaggerConnection {
   final String baseUrl;
+  final log = getLogger();
+
   SwaggerConnection({required this.baseUrl});
 
   Future<void> upsertUser(String uid, String name) async {
@@ -236,9 +239,8 @@ class SwaggerConnection {
     final resp = await http.put(
       uri,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'winnerUid': uid}),
-    );
-    print('Update winner: $uid in $rid' );
+      body: jsonEncode({'winnerUid': uid}),    );
+    log.i('Updated winner: $uid in round $rid');
     if (resp.statusCode != 200 && resp.statusCode != 201 && resp.statusCode != 204) throw Exception('Update winner error: ${resp.statusCode}');
   }
 }
