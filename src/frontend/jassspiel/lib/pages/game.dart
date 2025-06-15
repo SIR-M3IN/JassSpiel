@@ -359,7 +359,38 @@ void _initializeGame() async {
                 border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
               ),
               child: Stack(
-                children: [                Positioned(
+                children: [
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: FutureBuilder<String>(
+                    future: _getCurrentTurnPlayer(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        String playerName = _getPlayerNameByUid(snapshot.data!);
+                        bool isMyTurn = snapshot.data! == widget.uid;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isMyTurn ? Colors.orange : Colors.blue.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            isMyTurn ? 'Du bist am Zug' : 'Am Zug: $playerName',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        );
+                      }
+                      return Container();
+                    },
+                  ),
+                ),
+                Positioned(
                   top: 16,
                   left: 0,
                   right: 0,
@@ -601,6 +632,25 @@ void _initializeGame() async {
       }
     }
     return null;
+  }
+
+  // Neue Methoden für die Am-Zug-Anzeige
+  Future<String> _getCurrentTurnPlayer() async {
+    if (currentRoundid.isEmpty) return '';
+    try {
+      return await swagger.getWhosTurn(currentRoundid);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  String _getPlayerNameByUid(String uid) {
+    for (var player in players) {
+      if (player.uid == uid) {
+        return player.username;
+      }
+    }
+    return 'Spieler';
   }
 }
 
