@@ -578,5 +578,30 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
     return 0;
   }
+
+  /// Returns the current trumpf symbol for the given game, or null if not set
+  Future<String?> getTrumpfSymbol(String gid) async {
+    // Find a card marked as trumpf in this game
+    final response = await client
+      .from('cardingames')
+      .select('CID')
+      .eq('GID', gid)
+      .eq('isTrumpf', true)
+      .limit(1)
+      .maybeSingle();
+    if (response != null && response['CID'] != null) {
+      final cardId = response['CID'] as String;
+      // Retrieve the symbol of that card
+      final symbolResp = await client
+        .from('card')
+        .select('symbol')
+        .eq('CID', cardId)
+        .maybeSingle();
+      if (symbolResp != null && symbolResp['symbol'] != null) {
+        return symbolResp['symbol'] as String;
+      }
+    }
+    return null;
+  }
 }
 

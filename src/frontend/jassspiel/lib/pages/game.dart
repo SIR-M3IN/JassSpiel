@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/gamelogic.dart';
-import 'package:jassspiel/swaggerConnection.dart';
 import 'package:jassspiel/logger.util.dart';
 import '../spieler.dart';
 import '../jasskarte.dart';
@@ -188,7 +187,30 @@ class _GameScreenState extends State<GameScreen> {
   
   int _scoreRefreshCounter = 0;
   late Timer _turnTimer;
+  late Timer _trumpfPollTimer;
+  String? _trumpfSymbol;
+
   String _currentTurnUid = '';
+
+/// Starts polling every 3 seconds to fetch the trumpf symbol
+void _startTrumpfPolling() {
+  _trumpfPollTimer = Timer.periodic(
+    const Duration(seconds: 3),
+    (_) async {
+      if (_trumpfSymbol != null) {
+        _trumpfPollTimer.cancel();
+        return;
+      }
+      final symbol = await db.getTrumpfSymbol(widget.gid);
+      if (symbol != null) {
+        setState(() {
+          _trumpfSymbol = symbol;
+        });
+        _trumpfPollTimer.cancel();
+      }
+    },
+  );
+}
 
 void _addPlayedCard(Jasskarte card) {
   setState(() {
@@ -287,7 +309,7 @@ void _handleNewCardFromListener() async {
 void initState() {
   super.initState();
   gameLogic = GameLogic(widget.gid); 
-  _initializeGame();
+  _initializeGame().then((_) => _startTrumpfPolling());
   db.newCard.addListener(_handleNewCardFromListener); 
 
   // Setup periodic turn update
@@ -308,11 +330,12 @@ void initState() {
 @override
 void dispose() {
   _turnTimer.cancel();
+  _trumpfPollTimer.cancel();
   db.newCard.removeListener(_handleNewCardFromListener);
   super.dispose();
 }
 
-void _initializeGame() async {
+Future<void> _initializeGame() async {
   //List<Spieler> loadedPlayers = await swagger.loadPlayers(widget.gid); 
   //int ownPlayerNumber = await swagger.getUrPlayernumber(widget.uid, widget.gid); 
   List<Spieler> loadedPlayers = await gameLogic.loadPlayers();
@@ -428,7 +451,39 @@ void _initializeGame() async {
                       ),
                     ),
                   ),
-                ),
+                ),                if (_trumpfSymbol != null) ...[
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.06,
+                      height: MediaQuery.of(context).size.width * 0.06,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.4),
+                            spreadRadius: 1,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: Image.asset(
+                          'other/${_trumpfSymbol!.toLowerCase()}.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 Positioned(
                   top: 16,
                   left: 0,
