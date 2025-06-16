@@ -21,7 +21,7 @@ from openapi_server.models.start_new_round_request import StartNewRoundRequest  
 from openapi_server.models.update_trumpf_request import UpdateTrumpfRequest  # noqa: E501
 from openapi_server import util
 from openapi_server.db import supabase
-
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 
 def games_gid_card_info_cid_get(gid, cid):  # noqa: E501
     """Holt eine Karte in einer Runde
@@ -223,17 +223,14 @@ def games_gid_players_post(gid, body):  # noqa: E501
             req = AddPlayerRequest.from_dict(connexion.request.get_json())
         else:
             req = body
-        # Ensure user exists
         usr = supabase.table('User').select('UID').eq('UID', req.uid).maybe_single().execute()
         if not usr or not usr.data:
             supabase.table('User').insert({'UID': req.uid, 'name': req.name}).execute()
         else:
             supabase.table('User').update({'name': req.name}).eq('UID', req.uid).execute()
-        # Prevent duplicate entry: return if user already in game
         exist = supabase.table('usergame').select('UID').eq('GID', gid).eq('UID', req.uid).maybe_single().execute()
         if exist and exist.data:
             return "Spieler existiert schon", 200
-        # Determine next player number
         ug = supabase.table('usergame').select('playernumber').eq('GID', gid).execute()
         nums = [d.get('playernumber', 0) for d in (ug.data or [])]
         next_num = max(nums) + 1 if nums else 1
@@ -285,9 +282,7 @@ def games_gid_trumpf_suit_put(gid, body):  # noqa: E501
             req = UpdateTrumpfRequest.from_dict(connexion.request.get_json())
         else:
             req = body
-        # Reset all trumpf flags
         supabase.table('cardingames').update({'isTrumpf': False}).eq('GID', gid).execute()
-        # Fetch CIDs for the chosen symbol
         cards = supabase.table('card').select('CID').eq('symbol', req.trumpf_symbol).execute()
         for c in (cards.data or []):
             supabase.table('cardingames').update({'isTrumpf': True}).eq('GID', gid).eq('CID', c.get('CID')).execute()

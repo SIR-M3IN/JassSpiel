@@ -6,8 +6,8 @@ from openapi_server.models.determine_winning_card_request import DetermineWinnin
 from openapi_server.models.jasskarte import Jasskarte as ApiJasskarte
 from openapi_server.models.winning_card_response import WinningCardResponse
 from openapi_server.db import supabase
-
 from ..cards_determine import get_winning_card, Jasskarte as LogicJasskarte
+
 
 def cards_cid_get(cid: str) -> Tuple[Union[Dict,str], int]:
     try:
