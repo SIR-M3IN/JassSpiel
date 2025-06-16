@@ -6,6 +6,7 @@ import 'package:jassspiel/logger.util.dart';
 import '../spieler.dart';
 import '../jasskarte.dart';
 import 'package:jassspiel/pages/showTrumpfDialogPage.dart';
+import 'dart:async';
 
 void main() {
   runApp(const CardGameApp());
@@ -186,6 +187,8 @@ class _GameScreenState extends State<GameScreen> {
   late Future<List<Jasskarte>> playerCards = Future.value([]);
   
   int _scoreRefreshCounter = 0;
+  late Timer _turnTimer;
+  String _currentTurnUid = '';
 
 void _addPlayedCard(Jasskarte card) {
   setState(() {
@@ -287,6 +290,26 @@ void initState() {
   _initializeGame();
   db.newCard.addListener(_handleNewCardFromListener); 
 
+  // Setup periodic turn update
+  _turnTimer = Timer.periodic(
+    const Duration(seconds: 1),
+    (_) async {
+      if (currentRoundid.isEmpty) return;
+      final turn = await db.getWhosTurn(currentRoundid);
+      if (turn != _currentTurnUid) {
+        setState(() {
+          _currentTurnUid = turn;
+        });
+      }
+    },
+  );
+}
+
+@override
+void dispose() {
+  _turnTimer.cancel();
+  db.newCard.removeListener(_handleNewCardFromListener);
+  super.dispose();
 }
 
 void _initializeGame() async {
@@ -333,6 +356,9 @@ void _initializeGame() async {
       //await swagger.updateWhosTurn(roundId, widget.uid); 
       String roundId = await db.GetRoundID(widget.gid);
       db.updateWhosTurn(roundId, widget.uid);
+      setState(() {
+        _currentTurnUid = widget.uid;
+      });
       String? selectedTrumpf = await showTrumpfDialog(context, playerCards: cards);
       if (selectedTrumpf != null) {
         //await swagger.updateTrumpf(widget.gid, selectedTrumpf); 
@@ -382,31 +408,25 @@ void _initializeGame() async {
                 Positioned(
                   top: 16,
                   right: 16,
-                  child: FutureBuilder<String>(
-                    future: _getCurrentTurnPlayer(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        String playerName = _getPlayerNameByUid(snapshot.data!);
-                        bool isMyTurn = snapshot.data! == widget.uid;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isMyTurn ? Colors.orange : Colors.blue.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.3)),
-                          ),
-                          child: Text(
-                            isMyTurn ? 'Du bist am Zug' : 'Am Zug: $playerName',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        );
-                      }
-                      return Container();
-                    },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: (_currentTurnUid == widget.uid)
+                          ? Colors.orange
+                          : Colors.blue.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      (_currentTurnUid == widget.uid)
+                          ? 'Du bist am Zug'
+                          : 'Am Zug: ${_getPlayerNameByUid(_currentTurnUid)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ),
                 Positioned(
@@ -684,16 +704,6 @@ void _initializeGame() async {
   }
 
   // Neue Methoden für die Am-Zug-Anzeige
-  Future<String> _getCurrentTurnPlayer() async {
-    if (currentRoundid.isEmpty) return '';
-    try {
-      //return await swagger.getWhosTurn(currentRoundid);
-      return await db.getWhosTurn(currentRoundid);
-    } catch (e) {
-      return '';
-    }
-  }
-
   String _getPlayerNameByUid(String uid) {
     for (var player in players) {
       if (player.uid == uid) {
