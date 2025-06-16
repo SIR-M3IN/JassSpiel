@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/gamelogic.dart';
+import 'package:jassspiel/swaggerConnection.dart';
 import 'package:jassspiel/logger.util.dart';
 import '../spieler.dart';
 import '../jasskarte.dart';
@@ -179,9 +180,12 @@ class _GameScreenState extends State<GameScreen> {
   int counter = 0;
   Jasskarte? firstCard; // First card played in the round
   String currentRoundid = '';
-  List<Jasskarte> playedCards = [];  List<Spieler> players = []; 
+  List<Jasskarte> playedCards = [];
+  List<Spieler> players = []; 
   int myPlayerNumber = 1; 
   late Future<List<Jasskarte>> playerCards = Future.value([]);
+  
+  int _scoreRefreshCounter = 0;
 
 void _addPlayedCard(Jasskarte card) {
   setState(() {
@@ -599,7 +603,8 @@ void _initializeGame() async {
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.3),
             borderRadius: BorderRadius.circular(8),
-          ),          child: Text(
+          ),
+          child: Text(
             name,
             style: const TextStyle(
               color: Colors.white,
@@ -608,6 +613,21 @@ void _initializeGame() async {
             ),
           ),
         ),
+        if (uid != null)
+          FutureBuilder<int>(
+            key: ValueKey('score_${uid}_$_scoreRefreshCounter'),
+            future: db.getPlayerScore(uid, widget.gid), // Remains db, no swagger equivalent
+            builder: (context, snapshot) {
+              final score = snapshot.data ?? 0;
+              return Text(
+                'Punkte: $score',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              );
+            },
+          ),
       ],
     );
   }
