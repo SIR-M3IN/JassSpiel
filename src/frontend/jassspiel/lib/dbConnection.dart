@@ -356,6 +356,7 @@ Future<int> getCardWorth(String cid, String gid) async {
   }
   Future<int> savePointsForUsers(List<Jasskarte> cards, String gid, String winnerUid, String teammateUid) async {
     int totalPoints = 0;
+    print(cards.length);
     for (var card in cards) {
       totalPoints += await getCardValue(card.cid, gid);
       print("Total Points: $totalPoints");

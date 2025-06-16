@@ -468,19 +468,14 @@ void _initializeGame() async {
                     //await swagger.addPlayInRound(roundId, widget.uid, details.data.cid);
                     db.addPlayInRound(roundId, widget.uid, details.data.cid);
                       log.d('Played cards: ${playedCards.map((c) => c.cid).join(', ')}');
-                      counter++;                    if (playedCards.length == 4) {
+                      counter++;                    
+                      if (playedCards.length == 4) {
+                      List<Jasskarte> playedcardstemp = playedCards;
                       log.i('Round complete with 4 cards, determining winner');
                       //String winner = await swagger.determineWinningCard(widget.gid, playedCards);
-                      String winner = await db.getWinningCard(playedCards, widget.gid, firstCard!);
+                      String winner = await db.getWinningCard(playedcardstemp, widget.gid, firstCard!);
                       log.i('Round winner determined: $winner');
-                      
-                      _showTrickWinnerPopup(winner);
-                      
-                      await Future.delayed(const Duration(seconds: 3));
-                      
-                      if (mounted) {
-                        Navigator.of(context).pop();
-                      }
+
                       
                       //var winnernumber = await swagger.getUrPlayernumber(winner, widget.gid);
                       int winnernumber = await db.getUrPlayernumber(winner, widget.gid); 
@@ -491,12 +486,19 @@ void _initializeGame() async {
                       else {teammatePlayerNumber = 2;}                      
                       //String teammateuid = await swagger.getNextPlayerUid(widget.gid, teammatePlayerNumber); 
                       String teammateuid = await db.getNextUserUid(widget.gid, teammatePlayerNumber);
+                      db.savePointsForUsers(playedcardstemp, widget.gid, winner, teammateuid);
                       log.d("Updating round winner: $winner");
                       //await swagger.updateWinner(roundId, winner);
                       db.updateWinnerDB(roundId, winner);
-
+                                            
+                      _showTrickWinnerPopup(winner);
+                      
+                      await Future.delayed(const Duration(seconds: 3));
+                      
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                      }
                       //await swagger.savePointsForUsers(widget.gid, gameLogic.buildCardsForSaveWinnerAsMap(playedCards, winner, teammateuid,));
-                      db.savePointsForUsers(playedCards, widget.gid, winner, teammateuid);
                       log.d("Points saved for winner team");
                       setState(() {
                         _scoreRefreshCounter++;
