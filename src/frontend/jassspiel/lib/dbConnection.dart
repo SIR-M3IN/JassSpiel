@@ -358,6 +358,7 @@ Future<int> getCardWorth(String cid, String gid) async {
     int totalPoints = 0;
     for (var card in cards) {
       totalPoints += await getCardValue(card.cid, gid);
+      print("Total Points: $totalPoints");
     }
     final response = await client
         .from('usergame')

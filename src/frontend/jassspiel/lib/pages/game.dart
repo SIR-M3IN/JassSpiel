@@ -215,12 +215,8 @@ Future<bool> _isCardAllowed(Jasskarte card) async {
   for (var k in hand) {
     print("Checking card: ${k.cid} with symbol ${k.symbol}");
     if (k.symbol == firstCard!.symbol) {
-      
-      final isKTrumpf = await db.isTrumpf(k.cid, widget.gid);
-      if (!isKTrumpf) {
         hasSameSuit = true;
         break;
-      }
     }
   }
   if (hasSameSuit) {
