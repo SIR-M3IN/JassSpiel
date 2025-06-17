@@ -1,3 +1,5 @@
+## @file games_controller.py
+# @brief Controller für Spiele-Endpunkte
 import connexion
 from typing import Dict
 from typing import Tuple
@@ -23,8 +25,13 @@ from openapi_server import util
 from openapi_server.db import supabase
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 
+## @brief Holt alle Informationen einer Karte in einem Spiel
+# @param gid Die eindeutige ID des Spiels
+# @param cid Die eindeutige ID der Karte
+# @return Ein Jasskarte mit den Kartendetails + eine 200-Response, oder eine Fehlermeldung und 500-Response bei einem Fehler
+@retry
 def games_gid_card_info_cid_get(gid, cid):  # noqa: E501
-    """Holt eine Karte in einer Runde
+    """Holt eine Karte in einer Runde mit allen Details.
 
      # noqa: E501
 
@@ -36,19 +43,15 @@ def games_gid_card_info_cid_get(gid, cid):  # noqa: E501
     :rtype: Union[CardDetailsResponse, Tuple[CardDetailsResponse, int], Tuple[CardDetailsResponse, int, Dict[str, str]]
     """
     try:
-        # Check if card is trumpf in this game
         resp = supabase.table('cardingames').select('isTrumpf').eq('GID', gid).eq('CID', cid).maybe_single().execute()
         is_trumpf = bool(resp.data.get('isTrumpf')) if resp and resp.data else False
-        # Retrieve card type
         ct_resp = supabase.table('card').select('cardtype').eq('CID', cid).maybe_single().execute()
         cardtype = ct_resp.data.get('cardtype') if ct_resp and ct_resp.data else ''
-        # Determine value
         if is_trumpf:
             value_map = {'Ass': 11, 'König': 4, 'Ober': 3, 'Unter': 20, '10': 10, '9': 14}
         else:
             value_map = {'Ass': 11, 'König': 4, 'Ober': 3, 'Unter': 2, '10': 10, '9': 0}
         value = value_map.get(cardtype, 0)
-        # Determine worth
         if is_trumpf:
             worth_map = {'Ass': 19, 'König': 18, 'Ober': 17, 'Unter': 16, '10': 15, '9': 14, '8': 13, '7': 12, '6': 11}
         else:
@@ -59,6 +62,10 @@ def games_gid_card_info_cid_get(gid, cid):  # noqa: E501
         print(f"Error in games_gid_card_info_cid_get: {e}")
         return Error(message="Fehler beim Abrufen der Karteninfo."), 500
 
+
+## @brief Teilt alle Karten zufällig unter den Spielern aus
+# @param gid Die eindeutige ID des Spiels
+# @return None + 200 wenns klappt oder 500 bei einem Fehler
 def games_gid_cards_shuffle_post(gid): #!  # noqa: E501
     """Mischt und verteilt Karten an die Spieler eines Spiels.
 
@@ -95,6 +102,10 @@ def games_gid_cards_shuffle_post(gid): #!  # noqa: E501
         print(f"Error in games_gid_cards_shuffle_post: {e}")
         return Error(message="Fehler beim Mischen der Karten."), 500
 
+
+## @brief Holt die die id der aktuellen Runde eines Spiels
+# @param gid Die eindeutige ID des Spiels
+# @return Die Runden ID + eine 200-Response, oder eine leere Runden ID und 500-Response bei einem Fehler
 def games_gid_current_round_id_get(gid: str) -> Tuple[GamesGidCurrentRoundIdGet200Response, int]:
     try:
         resp = (
@@ -116,6 +127,9 @@ def games_gid_current_round_id_get(gid: str) -> Tuple[GamesGidCurrentRoundIdGet2
         return GamesGidCurrentRoundIdGet200Response(rid=""), 500
 
 
+## @brief Holt die Nummer der aktuellen Runde eines Spiels
+# @param gid Die eindeutige ID des Spiels
+# @return Die Rundennummer + eine 200-Response, oder 0 und 500-Response bei einem Fehler
 def games_gid_current_round_number_get(gid):  # noqa: E501
     """Holt die Nummer der aktuellen Runde.
 
@@ -141,6 +155,9 @@ def games_gid_current_round_number_get(gid):  # noqa: E501
         return GamesGidCurrentRoundNumberGet200Response(whichround=0), 500
 
 
+## @brief Lässt einen Spieler einem Spiel beitreten
+# @param gid Die eindeutige ID des Spiels
+# @return None + eine 200-Response, oder eine Fehlermeldung und 404/500-Response bei einem Fehler
 def games_gid_join_post(gid):  # noqa: E501
     """Lässt einen Spieler einem Spiel beitreten.
 
@@ -163,6 +180,10 @@ def games_gid_join_post(gid):  # noqa: E501
         return Error(message="Fehler beim Beitreten zum Spiel."), 500
 
 
+## @brief Holt die UID des nächsten Spielers basierend auf der Spielernummer
+# @param gid Die eindeutige ID des Spiels
+# @param playernumber Die Spielernummer
+# @return Die UID des nächsten Spielers + eine 200-Response, oder eine leere UID und 500-Response bei einem Fehler
 def games_gid_next_player_uid_get(gid, playernumber):  # noqa: E501
     """Holt die UID des nächsten Spielers basierend auf der Spielernummer.
 
@@ -184,6 +205,9 @@ def games_gid_next_player_uid_get(gid, playernumber):  # noqa: E501
         return GamesGidNextPlayerUidGet200Response(uid=""), 500
 
 
+## @brief Lädt alle Spieler für ein Spiel
+# @param gid Die eindeutige ID des Spiels
+# @return Eine Liste von Spielern + eine 200-Response, oder eine leere Liste und 500-Response bei einem Fehler
 def games_gid_players_get(gid):  # noqa: E501
     """Lädt alle Spieler für ein Spiel.
 
@@ -206,6 +230,10 @@ def games_gid_players_get(gid):  # noqa: E501
         return [], 500
 
 
+## @brief Fügt einen Spieler zu einem Spiel hinzu
+# @param gid Die eindeutige ID des Spiels
+# @param body Der Request-Body, der die Spielerinformationen enthält
+# @return None + eine 201-Response, oder eine Fehlermeldung und 500-Response bei einem Fehler
 def games_gid_players_post(gid, body):  # noqa: E501
     """Fügt einen Spieler zu einem Spiel hinzu.
 
@@ -241,6 +269,10 @@ def games_gid_players_post(gid, body):  # noqa: E501
         return Error(message="Fehler beim Hinzufügen des Spielers."), 500
 
 
+## @brief Startet eine neue Runde in einem Spiel
+# @param gid Die eindeutige ID des Spiels
+# @param body Der Request-Body, der die Rundeninformationen enthält
+# @return None + eine 201-Response, oder eine Fehlermeldung und 500-Response bei einem Fehler
 def games_gid_rounds_post(gid, body):  # noqa: E501
     """Startet eine neue Runde in einem Spiel.
 
@@ -265,6 +297,10 @@ def games_gid_rounds_post(gid, body):  # noqa: E501
         return Error(message="Fehler beim Starten einer neuen Runde."), 500
 
 
+## @brief Aktualisiert die Trumpffarbe für ein Spiel
+# @param gid Die eindeutige ID des Spiels
+# @param body Der Request-Body, der die Trumpf-Informationen enthält
+# @return None + eine 200-Response, oder eine Fehlermeldung und 500-Response bei einem Fehler
 def games_gid_trumpf_suit_put(gid, body):  # noqa: E501
     """Aktualisiert die Trumpffarbe für ein Spiel.
 
@@ -292,6 +328,10 @@ def games_gid_trumpf_suit_put(gid, body):  # noqa: E501
         return Error(message="Fehler beim Aktualisieren der Trumpffarbe."), 500
 
 
+## @brief Aktualisiert die Punktestände für ein Spiel
+# @param gid Die eindeutige ID des Spiels
+# @param body Der Request-Body, der die Punkteinformationen enthält
+# @return Die Gesamtpunktzahl + eine 200-Response, oder None/Fehlermeldung und 500-Response bei einem Fehler
 def games_gid_update_scores_post(gid, body):  # noqa: E501
     try:
         # 1. Request parsen
@@ -351,6 +391,10 @@ def games_gid_update_scores_post(gid, body):  # noqa: E501
         print(f"Error in games_gid_update_scores_post: {e}")
         return
 
+## @brief Holt die Anzahl der Karten eines Spielers
+# @param gid Die eindeutige ID des Spiels
+# @param uid Die eindeutige ID des Spielers
+# @return Die Kartenanzahl + eine 200-Response, oder 0 und 500-Response bei einem Fehler
 def games_gid_users_uid_card_count_get(gid, uid):  # noqa: E501
     """Holt die Anzahl der Karten eines Spielers.
 
@@ -372,6 +416,10 @@ def games_gid_users_uid_card_count_get(gid, uid):  # noqa: E501
         return GamesGidUsersUidCardCountGet200Response(count=0), 500
 
 
+## @brief Holt die Karten eines bestimmten Spielers in einem Spiel
+# @param gid Die eindeutige ID des Spiels
+# @param uid Die eindeutige ID des Spielers
+# @return Eine Liste von Jasskarten + eine 200-Response, oder eine leere Liste und 500-Response bei einem Fehler
 def games_gid_users_uid_cards_get(gid, uid):  # noqa: E501
     """Holt die Karten eines bestimmten Spielers in einem Spiel.
 
@@ -396,6 +444,10 @@ def games_gid_users_uid_cards_get(gid, uid):  # noqa: E501
         return [], 500
 
 
+## @brief Holt die Spielernummer eines Benutzers in einem Spiel
+# @param gid Die eindeutige ID des Spiels
+# @param uid Die eindeutige ID des Spielers
+# @return Die Spielernummer + eine 200-Response, oder 0 und 500-Response bei einem Fehler
 def games_gid_users_uid_player_number_get(gid, uid):  # noqa: E501
     """Holt die Spielernummer eines Benutzers in einem Spiel.
 
@@ -417,6 +469,8 @@ def games_gid_users_uid_player_number_get(gid, uid):  # noqa: E501
         return GamesGidUsersUidPlayerNumberGet200Response(playernumber=0), 500
 
 
+## @brief Erstellt ein neues Spiel
+# @return Die GID des neuen Spiels + eine 201-Response, oder eine Fehlermeldung und 500-Response bei einem Fehler
 def games_post():  # noqa: E501
     """Erstellt ein neues Spiel.
 

@@ -19,7 +19,6 @@ void main() {
 
     test('should allow setting start player', () {
       runde.startPlayer = testSpieler;
-      
       expect(runde.startPlayer, equals(testSpieler));
       expect(runde.startPlayer.username, equals('TestPlayer'));
     });
