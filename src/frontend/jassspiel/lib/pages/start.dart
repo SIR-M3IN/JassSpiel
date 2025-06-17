@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/logger.util.dart';
+import 'package:jassspiel/swaggerConnection.dart';
 
 // KI: Update UI
 
@@ -63,6 +64,7 @@ class _StartPageState extends State<StartPage> {
   }  @override
   Widget build(BuildContext context) {
     final db = DbConnection();
+    final swagger = SwaggerConnection(baseUrl:  'http://localhost:8080');
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -347,10 +349,13 @@ class _StartPageState extends State<StartPage> {
       return;
     }
     final db = DbConnection();
+    final swagger = SwaggerConnection(baseUrl: 'http://localhost:8080');
     final uid = await db.getOrCreateUid();
     log.d('Retrieved UID for joining: $uid');
-    await db.saveUserIfNeeded(uid, name);
-    final ok = await db.joinGame(code);
+    //await db.saveUserIfNeeded(uid, name);
+    await swagger.upsertUser(uid, name);
+    //final ok = await db.joinGame(code);
+    final ok = await swagger.joinGame(code);
     if (!ok) {
       log.w('Failed to join game - room not found: $code');
       _showSnack('Raum mit Code $code nicht gefunden.', Colors.red);
@@ -358,6 +363,7 @@ class _StartPageState extends State<StartPage> {
     }
     log.i('Successfully joined game: $code');
     await db.addPlayerToGame(code, uid, name);
+
     log.d('Added player to game, navigating to initialization');
     Navigator.pushNamed(context, '/init', arguments: {'gid': code, 'uid': uid});
   }
@@ -372,16 +378,20 @@ class _StartPageState extends State<StartPage> {
       return;
     }
     final db = DbConnection();
+    final swagger = SwaggerConnection(baseUrl: 'http://localhost:8080');
     try {
       final uid = await db.getOrCreateUid();
-      await db.saveUserIfNeeded(uid, name);
-      final ok = await db.joinGame(code);
+      //await db.saveUserIfNeeded(uid, name);
+      await swagger.upsertUser(uid, name);
+      //final ok = await db.joinGame(code);
+      final ok = await swagger.joinGame(code);
       if (!ok) {
         _showSnack('Raum mit Code $code nicht gefunden.', Colors.red);
         setState(() => _isLoading = false);
         return;
       }
-      await db.addPlayerToGame(code, uid, name);
+      //await db.addPlayerToGame(code, uid, name);
+      await swagger.joinGame(code);
       if (!mounted) return;
       Navigator.pushNamed(context, '/init', arguments: {'gid': code, 'uid': uid});
     } catch (e) {

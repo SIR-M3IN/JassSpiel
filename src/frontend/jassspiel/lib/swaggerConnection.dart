@@ -85,7 +85,7 @@ class SwaggerConnection {
       final e = jsonDecode(resp.body);
       return e['rid'] as String;
     }
-    throw Exception('Get round id error: ${resp.statusCode}');
+    return '';
   }
 
   Future<void> startNewRound(String gid, int whichround) async {
@@ -118,7 +118,7 @@ class SwaggerConnection {
         e['symbol'], e['cid'], e['cardtype'], e['path']
       )).toList();
     }
-    throw Exception('Get played cards error: ${resp.statusCode}');
+    return [];
   }
 
   Future<String?> getFirstCardCid(String rid) async {
@@ -128,7 +128,7 @@ class SwaggerConnection {
       final e = jsonDecode(resp.body);
       return e['cid'] as String?;
     }
-    throw Exception('Get first card cid error: ${resp.statusCode}');
+    return null;
   }
 
   Future<String> getWhosTurn(String rid) async {
@@ -136,9 +136,9 @@ class SwaggerConnection {
     final resp = await http.get(uri);
     if (resp.statusCode == 200) {
       final e = jsonDecode(resp.body);
-      return e['uid'] as String;
+      return e['uid']?.toString() ?? '';
     }
-    throw Exception('Get turn error: ${resp.statusCode}');
+    return '';
   }
 
   Future<void> updateWhosTurn(String rid, String uid) async {
