@@ -1,6 +1,23 @@
+/// @file showTrumpfDialogPage.dart
+/// @brief Enthält den Dialog zur Auswahl des Trumpfs.
+//
+/// Diese Datei definiert die Funktion [showTrumpfDialog], die einen modalen Dialog
+/// anzeigt, in dem der Spieler die Trumpffarbe für die aktuelle Runde auswählen kann.
+/// Der Dialog zeigt optional die Karten des Spielers als Hilfe an.
 import 'package:flutter/material.dart';
 import 'package:jassspiel/jasskarte.dart';
 
+/// @brief Zeigt einen Dialog zur Auswahl der Trumpffarbe an.
+///
+/// Öffnet einen modalen Dialog, der den Spieler auffordert, eine der vier
+/// Farben (Herz, Laub, Schella, Eichel) als Trumpf zu wählen. Der Dialog
+/// kann nicht ohne eine Auswahl geschlossen werden.
+///
+/// @param context Der BuildContext des aufrufenden Widgets.
+/// @param playerCards Optional eine Liste der [Jasskarte] des Spielers, die
+///   im Dialog zur Unterstützung angezeigt wird.
+/// @return Ein [Future] das mit der als String gewählten Trumpffarbe
+///   (z.B. 'Herz') abschließt, oder null, wenn der Dialog anders geschlossen wird.
 Future<String?> showTrumpfDialog(BuildContext context, {List<Jasskarte>? playerCards}) {
   String? selectedTrumpf;
 
@@ -205,6 +222,17 @@ Future<String?> showTrumpfDialog(BuildContext context, {List<Jasskarte>? playerC
   );
 }
 
+/// @brief Erstellt eine einzelne Auswahloption für eine Trumpffarbe.
+///
+/// Dieses private Helfer-Widget rendert einen [RadioListTile] für eine
+/// Trumpffarbe. Es hebt die ausgewählte Option visuell hervor.
+///
+/// @param title Der auf dem Button angezeigte Text (z.B. '♥️ Herz').
+/// @param value Der interne Wert der Option (z.B. 'Herz').
+/// @param selectedValue Der aktuell ausgewählte Wert, um die Hervorhebung zu steuern.
+/// @param onChanged Callback-Funktion, die bei Auswahl der Option aufgerufen wird.
+/// @param color Die Farbe, die für die Hervorhebung verwendet wird.
+/// @return Ein Widget, das die Trumpf-Auswahloption darstellt.
 Widget _buildTrumpfOption(String title, String value, String? selectedValue, Function(String?) onChanged, Color color) {
   final isSelected = selectedValue == value;
   return Container(

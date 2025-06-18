@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pages/game.dart';
-import 'pages/users_page.dart';
 import 'pages/start.dart';
 import 'package:logger/logger.dart';
 import 'logger.util.dart';
@@ -34,7 +33,6 @@ class CardGameApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const StartPage(),
-        '/users': (context) => const UsersPage(),
       },
       onGenerateRoute: (settings) {
         final args = settings.arguments;

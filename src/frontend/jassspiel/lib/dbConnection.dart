@@ -7,6 +7,11 @@ import 'package:supabase/supabase.dart';
 import 'package:jassspiel/spieler.dart';
 import 'package:jassspiel/jasskarte.dart';
 
+/// Provides a connection to the Supabase database to handle all game-related data.
+///
+/// This class encapsulates all the methods needed to interact with the backend,
+/// including fetching card data, managing users, creating and joining games,
+/// and handling game state.
 class DbConnection {
   late final SupabaseClient client;
   final Uuid _uuid = const Uuid();
@@ -18,6 +23,9 @@ class DbConnection {
     );
   }
 
+  /// Fetches all available Jass cards from the database.
+  ///
+  /// Returns a list of [Jasskarte] objects.
   Future<List<Jasskarte>> getAllCards() async {
     final response = await client
         .from('card')
@@ -34,6 +42,11 @@ class DbConnection {
     }
     return cards;
   }
+
+  /// Fetches a specific card by its unique card ID (CID).
+  ///
+  /// [cid] The unique identifier for the card.
+  /// Returns a [Jasskarte] object if found, otherwise throws an exception.
   Future<Jasskarte> getCardByCid(String cid) async {
     final response = await client
         .from('card')
@@ -52,6 +65,11 @@ class DbConnection {
     }
   }
 
+  /// Retrieves the existing user ID (UID) from local storage,
+  /// or creates a new one if it doesn't exist.
+  ///
+  /// This ensures that the user has a persistent identity across sessions.
+  /// Returns the user's unique ID.
   Future<String> getOrCreateUid() async {
     final prefs = await SharedPreferences.getInstance();
     var uid = prefs.getString('UID');
@@ -62,6 +80,12 @@ class DbConnection {
     return uid;
   }
 
+  /// Saves or updates a user's information in the database.
+  ///
+  /// [uid] The user's unique ID.
+  /// [name] The user's display name.
+  /// If the user doesn't exist, a new record is created.
+  /// If the user exists, their name is updated.
   Future<void> saveUserIfNeeded(String uid, String name) async {
     final existing = await client
         .from('User')
@@ -75,6 +99,10 @@ class DbConnection {
     }
   }
 
+  /// Creates a new game with a unique game code.
+  ///
+  /// Generates a unique code, creates a new game record in the database,
+  /// and returns the game code.
   Future<String> createGame() async {
     String code;
     do {
@@ -90,6 +118,11 @@ class DbConnection {
     return code;
   }
 
+  /// Allows a player to join an existing game using a game code.
+  ///
+  /// [code] The game code to join.
+  /// Increments the participant count for the game.
+  /// Returns `true` if the game was joined successfully, `false` otherwise.
   Future<bool> joinGame(String code) async {
     final resp = await client
         .from('games')
@@ -104,6 +137,10 @@ class DbConnection {
     return false;
   }
 
+/// Fetches the cards that have been played in a specific round.
+///
+/// [rid] The unique identifier for the round.
+/// Returns a list of [Jasskarte] objects that have been played in the round.
 Future<List<Jasskarte>> getPlayedCards(String rid) async {
   final response = await client
       .from('plays')
@@ -131,6 +168,12 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
   return playedCards;
 }
   
+  /// Adds a player to a specific game.
+  ///
+  /// [gid] The game ID.
+  /// [uid] The user ID of the player to add.
+  /// [name] The name of the player.
+  /// It ensures the user exists and assigns them the next available player number.
   Future<void> addPlayerToGame(String gid, String uid, String name) async {
     await saveUserIfNeeded(uid, name);
 
@@ -157,6 +200,10 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     });
   }
 
+  /// Loads all players currently in a specific game.
+  ///
+  /// [gid] The game ID.
+  /// Returns a list of [Spieler] objects representing the players in the game.
   Future<List<Spieler>> loadPlayers(String gid) async {
     final response = await client
         .from('usergame')
@@ -172,6 +219,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     }).toList();
   }
 
+  /// Shuffles the deck of cards and deals them to the players in the game.
+  ///
+  /// [cards] The list of all [Jasskarte] to be shuffled.
+  /// [players] The list of [Spieler] in the game.
+  /// [gid] The game ID.
   Future<void> shuffleCards(List<Jasskarte> cards, List<Spieler> players, String gid) async {
     cards.shuffle();
     print('Shuffle Cards Called');
@@ -186,6 +238,12 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       }
     }
   }
+
+  /// Fetches the cards held by the current user in a specific game.
+  ///
+  /// [gid] The game ID.
+  /// [uid] The current user's ID.
+  /// Returns a list of [Jasskarte] objects representing the user's hand.
   Future<List<Jasskarte>> getUrCards(String gid, String uid) async {
     final response = await client
         .from('cardingames')
@@ -206,12 +264,20 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     return cards;
   }
 
+  /// Fetches the hand of cards for the current user in a specific game.
+  ///
+  /// [gid] The game ID.
+  /// Returns a list of [Jasskarte] objects representing the user's hand.
   Future<List<Jasskarte>> getMyHand(String gid) async {
     final uid = await getOrCreateUid();
     return await getUrCards(gid, uid);
   }
 
-
+  /// Counts the number of cards held by a user in a specific game.
+  ///
+  /// [gid] The game ID.
+  /// [uid] The user ID.
+  /// Returns the number of cards in the user's hand.
   Future<int> getCardCount(String gid, String uid) async {
     final response = await client
         .from('cardingames')
@@ -220,6 +286,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
         .eq('GID', gid);
     return response.length;
   }  
+  /// Records a card play in the database for a specific round.
+  ///
+  /// [rid] The round ID.
+  /// [uid] The user ID of the player making the play.
+  /// [cid] The card ID being played.
   Future<void> addPlayInRound(String rid, String uid, String cid) async {
     final existingPlays = await client
         .from('plays')
@@ -234,6 +305,10 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     print('DEBUG: Card $cid for player $uid in round $rid inserted');
   }
 
+  /// Retrieves the most recent round ID for a specific game.
+  ///
+  /// [gid] The game ID.
+  /// Returns the round ID, or an empty string if no rounds are found.
   Future<String> GetRoundID(String gid) async {
     final response = await client
         .from('rounds')
@@ -250,6 +325,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
   }  
 
 
+  /// Checks if a specific card is a trump card in the given game.
+  ///
+  /// [cid] The card ID.
+  /// [gid] The game ID.
+  /// Returns `true` if the card is a trump card, `false` otherwise.
   Future<bool> isTrumpf(String cid, String gid) async {
     final response = await client
       .from('cardingames')
@@ -261,11 +341,21 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     return response?['isTrumpf'] as bool? ?? false;
   }
 
+  /// Retrieves the card type for a specific card ID.
+  ///
+  /// [cid] The card ID.
+  /// Returns the card type as a string.
   Future<String> getCardType(String cid) async {
     final response = await client.from('card').select('cardtype').eq('CID', cid).maybeSingle();
     print('DEBUG getCardType response: $response');
     return response?['cardtype'] as String? ?? '';
   }
+
+  /// Calculates the base value of a card for scoring, considering if it's a trump card.
+  ///
+  /// [cid] The card ID.
+  /// [gid] The game ID.
+  /// Returns the card value as an integer.
   Future<int> getCardValue(String cid, String gid) async {
     String cardType = await getCardType(cid);
     if (await isTrumpf(cid, gid) == true) {
@@ -305,7 +395,13 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       }
     }
   }
-Future<int> getCardWorth(String cid, String gid) async {
+
+  /// Calculates the total worth of a card for a trick, considering if it's a trump card.
+  ///
+  /// [cid] The card ID.
+  /// [gid] The game ID.
+  /// Returns the card worth as an integer.
+  Future<int> getCardWorth(String cid, String gid) async {
     if (await isTrumpf(cid, gid)) {
       switch (await getCardType(cid)) {
         case 'Ass':
@@ -354,6 +450,14 @@ Future<int> getCardWorth(String cid, String gid) async {
       }
     }
   }
+
+  /// Saves the points for the users based on the cards won in a trick.
+  ///
+  /// [cards] The list of cards won in the trick.
+  /// [gid] The game ID.
+  /// [winnerUid] The user ID of the trick winner.
+  /// [teammateUid] The user ID of the trick winner's teammate.
+  /// Returns the total points scored.
   Future<int> savePointsForUsers(List<Jasskarte> cards, String gid, String winnerUid, String teammateUid) async {
     int totalPoints = 0;
     print(cards.length);
@@ -382,6 +486,12 @@ Future<int> getCardWorth(String cid, String gid) async {
     return totalPoints;
   }  
   
+  /// Determines the winning card from a list of cards based on game rules.
+  ///
+  /// [cards] The list of cards to evaluate.
+  /// [gid] The game ID.
+  /// [firstCard] A reference card to determine the winning criteria.
+  /// Returns the user ID of the player who played the winning card.
   Future<String> getWinningCard(List<Jasskarte> cards, String gid, Jasskarte firstCard) async {
     Jasskarte? winningCard;
     for (var card in cards) {
@@ -402,9 +512,16 @@ Future<int> getCardWorth(String cid, String gid) async {
     print('WINNINGUID: ${response?['UID']}');
     return response?['UID'] as String? ?? '';
   }
+
+  /// Updates the winner information in the round record.
+  ///
+  /// [uid] The user ID of the winner.
+  /// [rid] The round ID.
   Future<void> updateWinnerDB(String uid, String rid) async{
     await client.from('rounds').update({'winnerid': uid}).eq('RID', rid);
   }
+
+  // Mit hilfe von KI: Hilf mir das ich warte bis 4 Spieler im Spiel sind
   Future<List<Spieler>> waitForFourPlayers(String gid) {
     final completer = Completer<List<Spieler>>();
     void checkPlayers() async {
@@ -464,10 +581,18 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     return List.generate(4, (_) => chars[rnd.nextInt(chars.length)]).join();
   }
 
+  /// Checks if a game code is available (i.e., not already taken by another game).
+  ///
+  /// [code] The game code to check.
+  /// Returns `true` if the code is available, `false` otherwise.
   Future<bool> isCodeAvailable(String code) async {
     final resp = await client.from('games').select('GID').eq('GID', code).maybeSingle();
     return resp == null;
   }  
+  /// Starts a new round in the game, initializing it in the database.
+  ///
+  /// [gid] The game ID.
+  /// [whichround] The current round number.
   Future<void> startNewRound(String gid, int whichround) async {
     await client.from('rounds').insert({
       'GID': gid,
@@ -476,6 +601,10 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
 
   }
 
+  /// Retrieves the current round number for a specific game.
+  ///
+  /// [gid] The game ID.
+  /// Returns the round number, or -1 if no rounds are found.
   Future<int> getWhichRound(String gid) async {
     final response = await client
         .from('rounds')
@@ -492,10 +621,18 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
   }
 
+  /// Updates the player turn information in the database.
+  ///
+  /// [rid] The round ID.
+  /// [uid] The user ID of the player whose turn it is.
   void updateWhosTurn(String rid, String uid) async {
     await client.from('rounds').update({'whoIsAtTurn': uid}).eq('RID', rid);
   }
 
+  /// Retrieves the user ID of the player whose turn it is in the current round.
+  ///
+  /// [rid] The round ID.
+  /// Returns the user ID as a string.
   Future<String> getWhosTurn(String rid) async {
     final response = await client
       .from('rounds')
@@ -509,6 +646,12 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
     return '';
   }
+
+  /// Retrieves the player number for the current user in the specified game.
+  ///
+  /// [uid] The user ID.
+  /// [gid] The game ID.
+  /// Returns the player number as an integer.
   Future<int> getUrPlayernumber(String uid, String gid) async {
     final response = await client
       .from('usergame')
@@ -521,6 +664,12 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
     else{ throw Exception('Error');}
   }
+
+  /// Retrieves the user ID of the next player in turn order.
+  ///
+  /// [gid] The game ID.
+  /// [playernumber] The player number to find the next user for.
+  /// Returns the user ID as a string.
   Future<String> getNextUserUid(String gid, int playernumber) async{
     final response = await client
       .from('usergame')
@@ -534,6 +683,10 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       else {throw Exception('Error in getNextUserUid gid: $gid playernumber $playernumber');}
   }    
   
+  /// Updates the trumpf status for cards in the game.
+  ///
+  /// [gid] The game ID.
+  /// [trumpf] The symbol of the trumpf card.
   Future<void> updateTrumpf(String gid, String trumpf) async {
     await client.from('cardingames')
         .update({'isTrumpf': false})
@@ -557,6 +710,9 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
   } 
 
+  /// Retrieves a list of open games available for joining.
+  ///
+  /// Returns a list of maps containing game ID, room name, and participant count.
   Future<List<Map<String, dynamic>>> getOpenGames() async {
     final response = await client
         .from('games')
@@ -565,6 +721,12 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         .lt('participants', 4);
     return List<Map<String, dynamic>>.from(response as List);
   }
+
+  /// Retrieves the current score of a player in a specific game.
+  ///
+  /// [uid] The user ID.
+  /// [gid] The game ID.
+  /// Returns the score as an integer.
   Future<int> getPlayerScore(String uid, String gid) async {
     final response = await client
         .from('usergame')

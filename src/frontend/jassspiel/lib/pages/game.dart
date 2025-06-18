@@ -1,3 +1,38 @@
+/// @file game.dart
+/// @brief Hauptspielbildschirm für das Jass-Kartenspiel
+/// 
+/// Diese Datei enthält die komplette Spiellogik und UI für das Jass-Spiel.
+/// Sie verwaltet den Spielzustand, die Kartendarstellung, Spielerinteraktionen
+/// und die Kommunikation mit dem Backend über SwaggerConnection und DbConnection.
+/// 
+/// # Hauptkomponenten:
+/// - **InitWidget**: Wartet auf alle 4 Spieler bevor das Spiel startet
+/// - **GameScreen**: Der eigentliche Spielbildschirm mit allen Spielelementen  
+/// - **CardHand**: Darstellung der Spielerkarten am unteren Bildschirmrand
+/// - **PlayedCard**: Darstellung der gespielten Karten in der Tischmitte
+/// - **CardWidget**: Einzelne draggable Karte mit Drag & Drop Funktionalität
+/// 
+/// # Spielablauf:
+/// 1. Spieler warten bis alle 4 Spieler beigetreten sind (InitWidget)
+/// 2. Karten werden verteilt und Trumpf bestimmt  
+/// 3. Spieler ziehen Karten per Drag & Drop in die Tischmitte
+/// 4. Nach 4 gespielten Karten wird der Stichgewinner ermittelt
+/// 5. Punkte werden berechnet und eine neue Runde startet
+/// 
+/// # Technische Details:
+/// - Man kann sowohl SwaggerConnection (REST API) als auch DbConnection (Realtime) verwenden
+/// - Realtime Updates über Supabase für gespielte Karten
+/// - Timer für Turn-Updates und Trumpf-Polling  
+/// - Umfassende Validierung für erlaubte Kartenzüge
+/// - Responsive UI
+/// 
+/// # Datenstrukturen:
+/// - **playedCards**: List<Jasskarte> - Gespielte Karten pro Spieler
+/// - **playerCards**: List<Jasskarte> - Karten des aktuellen Spielers
+/// - **players**: List<Spieler> - Alle Spieler im Spiel
+/// - **currentRoundId**: int - ID der aktuellen Runde
+/// - **gameId**: int - ID des aktuellen Spiels
+
 import 'package:flutter/material.dart';
 import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/gamelogic.dart';
@@ -7,25 +42,45 @@ import '../spieler.dart';
 import '../jasskarte.dart';
 import 'package:jassspiel/pages/showTrumpfDialogPage.dart';
 import 'dart:async';
+
 //KI: Update UI
 void main() {
   runApp(const CardGameApp());
 }
-// KI: Baue mir ein Widget welches genau 1x aufgerufen wird, wenn die App gestartet wird. Außerdem soll es den Parameter GID definieren
+/// @brief Initialisierungswidget das beim App-Start einmal aufgerufen wird
+/// 
+/// Wartet darauf, dass 4 Spieler dem Spiel beitreten, bevor es zum 
+/// eigentlichen Spielbildschirm wechselt. Zeigt einen Ladebildschirm
+/// @brief Initialisierungswidget für den Spielstart
+/// 
+/// Dieses Widget wird einmalig beim App-Start aufgerufen und ist verantwortlich für:
+/// - Warten auf alle 4 Spieler bevor das Spiel beginnt
+/// - Laden der Spieler-Daten vom Server
+/// - Weiterleitung zum eigentlichen Spielbildschirm nach erfolgreicher Initialisierung
+/// - Anzeige eines Ladebildschirms mit Fortschrittsanzeige
+///
+/// @param gid Eindeutige Spiel-ID für die Identifikation des Spiels
+/// @param uid Eindeutige Benutzer-ID des aktuellen Spielers
+// KI: Baue mir ein Widget das genau 1x aufgerufen wird, wenn die App startet. Definiere außerdem die GID
 class InitWidget extends StatefulWidget {
-  final String gid;
-  final String uid;
+  final String gid;  ///< Eindeutige Spiel-ID
+  final String uid;  ///< Eindeutige Benutzer-ID
   const InitWidget({required this.gid, required this.uid, super.key});
 
   @override
   _InitWidgetState createState() => _InitWidgetState();
 }
 
+/// @brief State-Klasse für das Initialisierungswidget
+/// 
+/// Verwaltet den Ladezustand und die Spieler-Initialisierung.
+/// Lädt kontinuierlich die Spieler bis alle 4 vorhanden sind.
 class _InitWidgetState extends State<InitWidget> {
-  late GameLogic gameLogic;
-  bool loading = true;
-  List<Spieler> players = [];
-  final log = getLogger();
+  late GameLogic gameLogic;  ///< Spiellogik-Instanz
+  bool loading = true;       ///< Ladezustand
+  List<Spieler> players = []; ///< Liste der geladenen Spieler
+  final log = getLogger();   ///< Logger-Instanz
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +89,10 @@ class _InitWidgetState extends State<InitWidget> {
     _loadPlayersAndWait();
   }
 
+  /// @brief Lädt Spieler und wartet auf 4 vollständige Teilnehmer
+  /// 
+  /// Prüft alle 2 Sekunden, ob bereits 4 Spieler dem Spiel beigetreten sind.
+  /// Wenn ja, wird zum Hauptspielbildschirm gewechselt.
   Future<void> _loadPlayersAndWait() async {
     log.d('Starting to load players and waiting for 4 players');
     while (mounted) {
@@ -47,15 +106,12 @@ class _InitWidgetState extends State<InitWidget> {
           players = loadedPlayers;
           loading = false;
         });
-
         if (!mounted) return;
-
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => GameScreen(gid: widget.gid, uid: widget.uid),
           ),
         );
-
         break;
       } else {
         if (!mounted) return;
@@ -69,6 +125,7 @@ class _InitWidgetState extends State<InitWidget> {
     }
   }
   @override
+  //KI: Hilfe bei UI
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
@@ -164,14 +221,50 @@ class CardGameApp extends StatelessWidget {
   }
 }
 
+/// @brief Hauptspielbildschirm für das Jass-Kartenspiel
+/// 
+/// Dies ist das zentrale Widget für das eigentliche Spiel. Es verwaltet:
+/// - Die komplette Spiellogik und den Spielzustand
+/// - Real-time Kommunikation mit dem Backend
+/// - UI-Elemente wie Spielfeld, Karten, Avatare und HUD
+/// - Drag & Drop Funktionalität für Karten
+/// - Timer und Rundenlogik
+/// - Gewinnererkennung und Punktevergabe
+/// 
+/// Das Widget verwendet sowohl REST API (SwaggerConnection) als auch
+/// Real-time Updates (DbConnection) für nahtlose Multiplayer-Erfahrung.
+///
+/// @param gid Eindeutige Spiel-ID
+/// @param uid Eindeutige Benutzer-ID des aktuellen Spielers
 class GameScreen extends StatefulWidget {
-  final String gid;
-  final String uid;
+  final String gid;  ///< Eindeutige Spiel-ID
+  final String uid;  ///< Eindeutige Benutzer-ID des aktuellen Spielers
   const GameScreen({required this.gid, required this.uid, super.key});
-
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
+
+/// @brief State-Klasse für den Hauptspielbildschirm
+/// 
+/// Diese Klasse verwaltet den kompletten Spielzustand und alle Spiellogik:
+/// 
+/// # Wichtige Zustandsvariablen:
+/// - **playedCards**: Map der gespielten Karten pro Spieler (Spielernummer -> Karte)
+/// - **playerCards**: Liste der Karten des aktuellen Spielers  
+/// - **players**: Liste aller Spieler im Spiel
+/// - **currentRoundId**: ID der aktuellen Runde
+/// - **gameId**: ID des aktuellen Spiels
+/// - **trumpf**: Aktueller Trumpf (Eichel, Rosen, Schilten, Schellen)
+/// - **currentTurn**: Spielernummer des Spielers der am Zug ist
+/// 
+/// # Timer und Polling:
+/// - **turnTimer**: Überwacht Änderungen des aktuellen Zugs
+/// - **trumpfTimer**: Überwacht Änderungen des Trumpfs
+/// - **updateTimer**: Regelmäßige Updates des Spielzustands
+/// 
+/// # Kommunikation:
+/// - **db**: DbConnection für Real-time Updates
+/// - **swagger**: SwaggerConnection für REST API Aufrufe
 class _GameScreenState extends State<GameScreen> {
   DbConnection db = DbConnection();
   int backupCounter = 0; 
@@ -193,7 +286,16 @@ class _GameScreenState extends State<GameScreen> {
 
   String _currentTurnUid = '';
 
-/// Starts polling every 3 seconds to fetch the trumpf symbol
+/// @brief Startet das periodische Polling für das Trumpf-Symbol
+/// 
+/// Diese Methode startet einen Timer der alle 3 Sekunden das aktuelle
+/// Trumpf-Symbol vom Server abruft. Das Polling wird automatisch beendet
+/// sobald ein Trumpf-Symbol empfangen wurde.
+/// 
+/// Das Trumpf-Symbol wird in der UI oben links angezeigt und ist wichtig
+/// für die Spielregeln (Trumpf-Karten stechen alle anderen Farben).
+/// 
+/// Timer wird in _trumpfPollTimer gespeichert für spätere Bereinigung.
 void _startTrumpfPolling() {
   _trumpfPollTimer = Timer.periodic(
     const Duration(seconds: 3),
@@ -226,6 +328,17 @@ void _addPlayedCard(Jasskarte card) {
   });
 }
 
+/// @brief Validiert ob eine Karte nach den Jass-Regeln gespielt werden darf
+/// 
+/// Diese Methode implementiert die Grundregeln des Jass-Spiels:
+/// 1. Die erste Karte einer Runde ist immer erlaubt
+/// 2. Trumpf-Karten sind immer erlaubt (stechen alle anderen Farben)
+/// 3. Wenn die erste Karte keine Trumpf ist: 
+///    - Gleiche Farbe folgen wenn vorhanden
+///    - Andere Karten nur wenn keine passende Farbe auf der Hand
+/// 
+/// @param card Die zu prüfende Jasskarte
+/// @return true wenn die Karte gespielt werden darf, false sonst
 Future<bool> _isCardAllowed(Jasskarte card) async {
   log.d("Checking if card is allowed (local only): ${card.cid}");
   if (firstCard == null) {
@@ -259,6 +372,18 @@ void _updateCardStates() {
 }
 
 // KI: Hilf mir die Karten bei allen Spielern anzuzeigen
+/// @brief Behandelt neue Karten die über den Real-time Listener empfangen werden
+/// 
+/// Diese Methode wird aufgerufen wenn eine neue Karte über den DbConnection
+/// Listener empfangen wird. Sie ist verantwortlich für:
+/// - Verarbeitung neuer gespielter Karten von anderen Spielern
+/// - Aktualisierung des playedCards Arrays
+/// - Erkennung wenn alle 4 Karten gespielt wurden
+/// - Automatisches Zurücksetzen nach einem Stich
+/// - Gewinnererkennung und Punktevergabe
+/// 
+/// Die Methode verhindert Race Conditions durch Überprüfung ob die Karte
+/// bereits vorhanden ist und verwendet mounted-Checks für sichere setState Aufrufe.
 void _handleNewCardFromListener() async {
   log.d("New card received from listener");
   final cardCid = db.newCard.value; // Remains db (realtime listener)
@@ -512,6 +637,19 @@ Future<void> _initializeGame() async {
 
               Center(
                 child:                DragTarget<Jasskarte>(
+                  /// @brief Callback für das Drag & Drop System - behandelt gespielte Karten
+                  /// 
+                  /// Diese Methode wird aufgerufen wenn ein Spieler eine Karte
+                  /// in die Tischmitte zieht. Sie implementiert die komplette
+                  /// Spiellogik für einen Kartenzug:
+                  /// 
+                  /// 1. Validierung: Ist der Spieler am Zug?
+                  /// 2. Kartenvalidierung: Ist die Karte nach Jass-Regeln erlaubt?
+                  /// 3. Spielzug ausführen: Karte hinzufügen und nächsten Spieler bestimmen
+                  /// 4. Rundenende: Bei 4 Karten Gewinner ermitteln und Punkte vergeben
+                  /// 5. Neue Runde: Automatisch nächste Runde starten
+                  /// 
+                  /// @param details DragTargetDetails mit der gespielten Karte
                   onAcceptWithDetails: (DragTargetDetails<Jasskarte> details) async {
                   String roundId = '';
                   roundId = await swagger.getCurrentRoundId(widget.gid); 
@@ -556,7 +694,7 @@ Future<void> _initializeGame() async {
                     if (playedCards.length == 4) {
                     List<Jasskarte> playedcardstemp = playedCards;
                     log.i('Round complete with 4 cards, determining winner');
-                    //String winner = await swagger.determineWinningCard(widget.gid, playedCards);
+                    //String winner = await swagger.determineWinningCard(widget.gid, PlayedCards);
                     String winner = await db.getWinningCard(playedcardstemp, widget.gid, firstCard!);
                     log.i('Round winner determined: $winner');
 
@@ -858,8 +996,15 @@ Future<void> _initializeGame() async {
   }
 }
 
+/// @brief Widget zur Darstellung einer gespielten Karte in der Tischmitte
+/// 
+/// Zeigt eine Karte an, die bereits von einem Spieler gespielt wurde.
+/// Die Karte wird in der Mitte des Spielfelds positioniert und ist
+/// nicht mehr interaktiv (kein Drag & Drop).
+/// 
+/// @param card Die Jasskarte die angezeigt werden soll
 class PlayedCard extends StatelessWidget {
-  final Jasskarte card;
+  final Jasskarte card;  ///< Die anzuzeigende Karte
 
   const PlayedCard(this.card, {super.key});
 
@@ -877,9 +1022,18 @@ class PlayedCard extends StatelessWidget {
   }
 }
 
-
+/// @brief Widget zur Darstellung der Kartenhand des Spielers
+/// 
+/// Zeigt die Karten des aktuellen Spielers am unteren Bildschirmrand an.
+/// Jede Karte ist als CardWidget implementiert und unterstützt Drag & Drop
+/// um sie in die Tischmitte zu ziehen.
+/// 
+/// Die Karten werden horizontal nebeneinander angeordnet und können
+/// sich überlappen um Platz zu sparen bei vielen Karten.
+/// 
+/// @param cards Liste der Jasskarten die angezeigt werden sollen
 class CardHand extends StatelessWidget {
-  final List<Jasskarte> cards;
+  final List<Jasskarte> cards;  ///< Die anzuzeigenden Karten
 
   const CardHand({required this.cards, super.key});
 
@@ -915,8 +1069,24 @@ class CardHand extends StatelessWidget {
   }
 }
 
+/// @brief Widget für eine einzelne draggable Spielkarte
+/// 
+/// Dieses Widget stellt eine einzelne Jasskarte dar und implementiert
+/// die Drag & Drop Funktionalität. Spieler können die Karte anklicken
+/// und in die Tischmitte ziehen um sie zu spielen.
+/// 
+/// Features:
+/// - Drag & Drop Funktionalität mit visueller Rückmeldung
+/// - Automatische Validierung ob der Zug erlaubt ist
+/// - Responsive Design mit anpassbarer Kartengröße
+/// - Smooth Animationen während des Dragging
+/// 
+/// Die Karte wird nur dann als "draggable" markiert wenn der Spieler
+/// am Zug ist und die Karte nach den Jass-Regeln gespielt werden darf.
+/// 
+/// @param card Die Jasskarte die dargestellt werden soll
 class CardWidget extends StatelessWidget {
-  final Jasskarte card;
+  final Jasskarte card;  ///< Die darzustellende Karte
 
   const CardWidget({required this.card, super.key});
 

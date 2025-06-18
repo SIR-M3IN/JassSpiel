@@ -1,11 +1,21 @@
+/// @file start.dart
+/// @brief Startseite der Jass-Anwendung
+///
+/// Diese Datei enthält die UI und Logik für die Startseite. Benutzer können hier:
+/// - Ihren Spielernamen eingeben und speichern.
+/// - Ein neues Spiel erstellen.
+/// - Einem bestehenden Spiel mit einem Code beitreten.
+/// - Eine Liste offener Spiele sehen und direkt beitreten.
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/logger.util.dart';
 import 'package:jassspiel/swaggerConnection.dart';
 
-// KI: Update UI
-
+/// @brief Die Startseite der Anwendung.
+///
+/// Dieses Widget ist der Einstiegspunkt für den Benutzer. Es ermöglicht das Erstellen
+/// oder Beitreten eines Spiels und zeigt eine Liste der verfügbaren Spielräume an.
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
 
@@ -13,6 +23,10 @@ class StartPage extends StatefulWidget {
   State<StartPage> createState() => _StartPageState();
 }
 
+/// @brief State-Management für die [StartPage].
+///
+// Verwaltet die Eingabefelder für Name und Code, den Ladezustand und die
+/// Interaktion mit der Datenbank zum Erstellen, Beitreten und Auflisten von Spielen.
 class _StartPageState extends State<StartPage> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
@@ -35,16 +49,25 @@ class _StartPageState extends State<StartPage> {
     _openGamesFuture = _fetchOpenGames();
   }
 
+  /// @brief Ruft die Liste der offenen Spiele von der Datenbank ab.
   Future<List<Map<String, dynamic>>> _fetchOpenGames() {
     log.d('Fetching open games');
     return DbConnection().getOpenGames();
   }
 
+  /// @brief Speichert den Spielernamen lokal für zukünftige Sitzungen.
+  ///
+  /// @param name Der zu speichernde Spielername.
   Future<void> _saveName(String name) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('name', name);
     log.d('Saved player name: $name');
   }
+
+  /// @brief Zeigt eine [SnackBar] mit einer Nachricht an.
+  ///
+  /// @param msg Die anzuzeigende Nachricht.
+  /// @param color Die optionale Hintergrundfarbe der SnackBar.
   void _showSnack(String msg, [Color? color]) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -61,7 +84,9 @@ class _StartPageState extends State<StartPage> {
     _nameController.dispose();
     _codeController.dispose();
     super.dispose();
-  }  @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     final db = DbConnection();
     return Scaffold(
@@ -271,7 +296,12 @@ class _StartPageState extends State<StartPage> {
         ),
       ),
     );
-  }  Widget startButton(DbConnection db) {
+  }
+
+  /// @brief Erstellt den "Spiel starten" Button.
+  ///
+  /// @param db Eine Instanz von [DbConnection] für Datenbankoperationen.
+  Widget startButton(DbConnection db) {
     return ElevatedButton(
       onPressed: _isLoading ? null : _onStartPressed,
       style: ElevatedButton.styleFrom(
@@ -291,7 +321,12 @@ class _StartPageState extends State<StartPage> {
               ],
             ),
     );
-  }  Widget joinButton(DbConnection db) {
+  }
+
+  /// @brief Erstellt den "Spiel beitreten" Button.
+  ///
+  /// @param db Eine Instanz von [DbConnection] für Datenbankoperationen.
+  Widget joinButton(DbConnection db) {
     return ElevatedButton(
       onPressed: _onJoinPressed,
       style: ElevatedButton.styleFrom(
@@ -311,6 +346,10 @@ class _StartPageState extends State<StartPage> {
     );
   }
 
+  /// @brief Behandelt die Logik, wenn der "Spiel starten" Button gedrückt wird.
+  ///
+  /// Validiert den Spielernamen, erstellt ein neues Spiel, fügt den Spieler hinzu
+  /// und navigiert zum Initialisierungsbildschirm des Spiels.
   void _onStartPressed() async {
     setState(() => _isLoading = true);
     final name = _nameController.text.trim();
@@ -340,6 +379,10 @@ class _StartPageState extends State<StartPage> {
     }
   }
 
+  /// @brief Behandelt die Logik, wenn der "Spiel beitreten" Button gedrückt wird.
+  ///
+  /// Validiert den Spielernamen und den Spielcode, tritt dem Spiel bei,
+  /// fügt den Spieler hinzu und navigiert zum Initialisierungsbildschirm.
   void _onJoinPressed() async {
     final name = _nameController.text.trim();
     final code = _codeController.text.trim();
@@ -369,7 +412,9 @@ class _StartPageState extends State<StartPage> {
     Navigator.pushNamed(context, '/init', arguments: {'gid': code, 'uid': uid});
   }
 
-  /// Join room by tapping in list
+  /// @brief Behandelt die Logik zum Beitreten eines Spiels direkt aus der Liste.
+  ///
+  /// @param code Der Spielcode des Raumes, dem beigetreten werden soll.
   void _joinRoomByCode(String code) async {
     setState(() => _isLoading = true);
     final name = _nameController.text.trim();
