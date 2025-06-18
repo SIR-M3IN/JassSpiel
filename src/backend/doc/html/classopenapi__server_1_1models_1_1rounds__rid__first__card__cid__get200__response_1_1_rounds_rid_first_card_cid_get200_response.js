@@ -1,0 +1,8 @@
+var classopenapi__server_1_1models_1_1rounds__rid__first__card__cid__get200__response_1_1_rounds_rid_first_card_cid_get200_response =
+[
+    [ "__init__", "classopenapi__server_1_1models_1_1rounds__rid__first__card__cid__get200__response_1_1_rounds_rid_first_card_cid_get200_response.html#a2e75bdb6e79adeccaac364ceb4a885e7", null ],
+    [ "cid", "classopenapi__server_1_1models_1_1rounds__rid__first__card__cid__get200__response_1_1_rounds_rid_first_card_cid_get200_response.html#a71092700b18755313c9365d4d2cb0363", null ],
+    [ "cid", "classopenapi__server_1_1models_1_1rounds__rid__first__card__cid__get200__response_1_1_rounds_rid_first_card_cid_get200_response.html#ab640a2c7c3b3ad36006d27a02b28403b", null ],
+    [ "from_dict", "classopenapi__server_1_1models_1_1rounds__rid__first__card__cid__get200__response_1_1_rounds_rid_first_card_cid_get200_response.html#acb2e9d6261ed338ff93f2415e6ec3c29", null ],
+    [ "_cid", "classopenapi__server_1_1models_1_1rounds__rid__first__card__cid__get200__response_1_1_rounds_rid_first_card_cid_get200_response.html#a12ee6dcddb098073fe1ef48eb1874c64", null ]
+];

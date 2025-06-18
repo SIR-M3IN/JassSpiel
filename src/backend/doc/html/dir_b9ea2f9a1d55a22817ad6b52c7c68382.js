@@ -1,0 +1,28 @@
+var dir_b9ea2f9a1d55a22817ad6b52c7c68382 =
+[
+    [ "__init__.py", "models_2____init_____8py.html", null ],
+    [ "add_play_request.py", "add__play__request_8py.html", "add__play__request_8py" ],
+    [ "add_player_request.py", "add__player__request_8py.html", "add__player__request_8py" ],
+    [ "base_model.py", "base__model_8py.html", "base__model_8py" ],
+    [ "card_details_response.py", "card__details__response_8py.html", "card__details__response_8py" ],
+    [ "cards_cid_type_get200_response.py", "cards__cid__type__get200__response_8py.html", "cards__cid__type__get200__response_8py" ],
+    [ "determine_winning_card_request.py", "determine__winning__card__request_8py.html", "determine__winning__card__request_8py" ],
+    [ "error.py", "error_8py.html", "error_8py" ],
+    [ "games_gid_current_round_id_get200_response.py", "games__gid__current__round__id__get200__response_8py.html", "games__gid__current__round__id__get200__response_8py" ],
+    [ "games_gid_current_round_number_get200_response.py", "games__gid__current__round__number__get200__response_8py.html", "games__gid__current__round__number__get200__response_8py" ],
+    [ "games_gid_next_player_uid_get200_response.py", "games__gid__next__player__uid__get200__response_8py.html", "games__gid__next__player__uid__get200__response_8py" ],
+    [ "games_gid_update_scores_post200_response.py", "games__gid__update__scores__post200__response_8py.html", "games__gid__update__scores__post200__response_8py" ],
+    [ "games_gid_users_uid_card_count_get200_response.py", "games__gid__users__uid__card__count__get200__response_8py.html", "games__gid__users__uid__card__count__get200__response_8py" ],
+    [ "games_gid_users_uid_player_number_get200_response.py", "games__gid__users__uid__player__number__get200__response_8py.html", "games__gid__users__uid__player__number__get200__response_8py" ],
+    [ "games_post201_response.py", "games__post201__response_8py.html", "games__post201__response_8py" ],
+    [ "jasskarte.py", "jasskarte_8py.html", "jasskarte_8py" ],
+    [ "rounds_rid_first_card_cid_get200_response.py", "rounds__rid__first__card__cid__get200__response_8py.html", "rounds__rid__first__card__cid__get200__response_8py" ],
+    [ "save_points_request.py", "save__points__request_8py.html", "save__points__request_8py" ],
+    [ "spieler.py", "spieler_8py.html", "spieler_8py" ],
+    [ "start_new_round_request.py", "start__new__round__request_8py.html", "start__new__round__request_8py" ],
+    [ "update_trumpf_request.py", "update__trumpf__request_8py.html", "update__trumpf__request_8py" ],
+    [ "update_turn_request.py", "update__turn__request_8py.html", "update__turn__request_8py" ],
+    [ "update_winner_request.py", "update__winner__request_8py.html", "update__winner__request_8py" ],
+    [ "users_uid_put_request.py", "users__uid__put__request_8py.html", "users__uid__put__request_8py" ],
+    [ "winning_card_response.py", "winning__card__response_8py.html", "winning__card__response_8py" ]
+];

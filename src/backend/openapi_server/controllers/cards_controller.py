@@ -1,3 +1,10 @@
+"""
+@file cards_controller.py
+@brief Controller für Karten-bezogene API-Endpunkte des Jass-Spiels
+@details Behandelt alle HTTP-Anfragen für Kartenoperationen wie Abrufen von Kartendetails,
+         Bestimmung der Gewinnerkarte und Laden aller verfügbaren Karten.
+"""
+
 import connexion
 from typing import Dict, List, Tuple, Union
 
@@ -11,6 +18,12 @@ from ..cards_determine import get_winning_card, Jasskarte as LogicJasskarte
 
 
 def cards_cid_get(cid: str) -> Tuple[Union[Dict,str], int]:
+    """
+    @brief Ruft Kartendetails anhand der Karten-ID ab
+    @param cid Eindeutige Karten-ID
+    @return Tuple mit Kartendetails (Dict) und HTTP-Status (int)
+    @details Lädt Kartendaten aus der Datenbank und gibt Symbol, Typ und Pfad zurück
+    """
     logger.info(f"cards_cid_get called with cid={cid}")
     try:
         resp = supabase.table('card') \
@@ -34,6 +47,12 @@ def cards_cid_get(cid: str) -> Tuple[Union[Dict,str], int]:
         return {"message": "error1"}, 500
 
 def cards_cid_type_get(cid: str) -> Tuple[Dict,int]:
+    """
+    @brief Ruft nur den Kartentyp anhand der Karten-ID ab
+    @param cid Eindeutige Karten-ID
+    @return Tuple mit Kartentyp (Dict) und HTTP-Status (int)
+    @details Lädt nur den Typ einer Karte (z.B. 'Ass', 'König', '7') aus der Datenbank
+    """
     logger.info(f"cards_cid_type_get called with cid={cid}")
     try:
         resp = supabase.table('card') \
@@ -54,6 +73,13 @@ def cards_cid_type_get(cid: str) -> Tuple[Dict,int]:
 def cards_determine_winning_card_post(
          gid: str, body: Dict
      ) -> Tuple[WinningCardResponse, int]:
+    """
+    @brief Bestimmt die Gewinnerkarte aus einer Liste gespielter Karten
+    @param gid Spiel-ID für Kontext (Trumpf-Status)
+    @param body Request-Body mit Liste der gespielten Karten
+    @return Tuple mit WinningCardResponse (UID des Gewinners) und HTTP-Status
+    @details Verwendet die Spiellogik um basierend auf Jass-Regeln die stärkste Karte zu ermitteln
+    """
     logger.info(f"cards_determine_winning_card_post called with gid={gid}, body={body}")
     try:
         req = DetermineWinningCardRequest.from_dict(body)
@@ -70,6 +96,11 @@ def cards_determine_winning_card_post(
         return WinningCardResponse(winner_uid=""), 500
 
 def cards_get():
+    """
+    @brief Ruft alle verfügbaren Karten aus der Datenbank ab
+    @return Tuple mit Liste aller Karten (List[ApiJasskarte]) und HTTP-Status (int)
+    @details Lädt das komplette Kartendeck mit allen Details (ID, Symbol, Typ, Pfad)
+    """
     logger.info("cards_get called")
     try:
         resp = supabase.table('card').select('CID, symbol, cardtype').execute()

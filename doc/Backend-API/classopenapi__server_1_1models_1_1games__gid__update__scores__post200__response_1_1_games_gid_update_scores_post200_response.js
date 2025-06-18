@@ -1,0 +1,8 @@
+var classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response =
+[
+    [ "__init__", "classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response.html#a832e105243faaac286a4738dd26fe78f", null ],
+    [ "from_dict", "classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response.html#a25f469b3246bf9714b037bd91051483d", null ],
+    [ "total_points", "classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response.html#abd935625eb9f4a50b7184baf1bcc89d6", null ],
+    [ "total_points", "classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response.html#a3fbd0d37dcc6aead95157ac92497cb7c", null ],
+    [ "_total_points", "classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response.html#af3bfeed40cdc1d4c061853df8c16cb6a", null ]
+];

@@ -1,0 +1,8 @@
+var classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba =
+[
+    [ "__init__", "classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba.html#a7da8e8f9430fb6b839ded38a7e01cc9c", null ],
+    [ "from_dict", "classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba.html#ae3bc0f9853ff6c7f47fad8c1eecb9f5a", null ],
+    [ "whichround", "classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba.html#a2fe99c64175499a432f9a0a01c5147e1", null ],
+    [ "whichround", "classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba.html#a097335bf1fc3081cb0d94467d1bafc03", null ],
+    [ "_whichround", "classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba.html#a168a3e44fd05dcfc5e9763a2d4ee2148", null ]
+];

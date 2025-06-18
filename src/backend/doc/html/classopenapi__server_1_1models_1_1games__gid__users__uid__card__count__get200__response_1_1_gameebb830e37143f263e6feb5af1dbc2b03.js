@@ -1,0 +1,8 @@
+var classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03 =
+[
+    [ "__init__", "classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03.html#aa9274f95b4ca068361f4f151e726663d", null ],
+    [ "count", "classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03.html#a7a259e51dab543e53b98752c1721addd", null ],
+    [ "count", "classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03.html#aa817cfa57d2e380984317ad83ab6d9fc", null ],
+    [ "from_dict", "classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03.html#a371effb719049a7cea3068507fa70a7d", null ],
+    [ "_count", "classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03.html#aedb57a048a5d5e8e680fd4776722f19a", null ]
+];

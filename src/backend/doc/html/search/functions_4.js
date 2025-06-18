@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['games_5fgid_5fcard_5finfo_5fcid_5fget_0',['games_gid_card_info_cid_get',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#abea37da731e49e3b3b3ead3f7e45af4d',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fcards_5fshuffle_5fpost_1',['games_gid_cards_shuffle_post',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#ada60af00cd6f3d5968fc562597c1fecf',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fcurrent_5fround_5fid_5fget_2',['games_gid_current_round_id_get',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#a0a6f0c439f1118d74e3fb4b5925c543a',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fcurrent_5fround_5fnumber_5fget_3',['games_gid_current_round_number_get',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#aa6066af5f79a9cd9d23fe6bfe956d8b9',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fjoin_5fpost_4',['games_gid_join_post',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#ae8a1dddf18bf84da8d051f1bf47e9cf9',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fnext_5fplayer_5fuid_5fget_5',['games_gid_next_player_uid_get',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#a80fc88bfd5407182807f29798da9e18b',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fplayers_5fget_6',['games_gid_players_get',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#ad4c85b02a251a04cb7915de6be8053b7',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fplayers_5fpost_7',['games_gid_players_post',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#a2216c092458d338c12f87dbb07a171e2',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5frounds_5fpost_8',['games_gid_rounds_post',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#a22c5c94e0776632a15dd569b6c61d60a',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5ftrumpf_5fsuit_5fput_9',['games_gid_trumpf_suit_put',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#a3b63442be37a700b72e8d3528e0b2d15',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fupdate_5fscores_5fpost_10',['games_gid_update_scores_post',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#a30ea85f4d2b41eb8ec235adabb962a81',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fusers_5fuid_5fcard_5fcount_5fget_11',['games_gid_users_uid_card_count_get',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#aaf484f2413e1768dfa450d8af3c0ad24',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fusers_5fuid_5fcards_5fget_12',['games_gid_users_uid_cards_get',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#ae20f89acdcaca286440a5021e92028dc',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fgid_5fusers_5fuid_5fplayer_5fnumber_5fget_13',['games_gid_users_uid_player_number_get',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#a04eb1dc2bc67620cac8df8f11f2138b1',1,'openapi_server::controllers::games_controller']]],
+  ['games_5fpost_14',['games_post',['../namespaceopenapi__server_1_1controllers_1_1games__controller.html#a5e33e44a98142657afcd017c4b030c73',1,'openapi_server::controllers::games_controller']]],
+  ['get_5fcard_5ftype_15',['get_card_type',['../namespaceopenapi__server_1_1cards__determine.html#a39abe8de824e271f26bfb8281ccc368b',1,'openapi_server::cards_determine']]],
+  ['get_5fcard_5fworth_16',['get_card_worth',['../namespaceopenapi__server_1_1cards__determine.html#ae796c3ad83d9fc3eb4a95081edd0d008',1,'openapi_server::cards_determine']]],
+  ['get_5fwinning_5fcard_17',['get_winning_card',['../namespaceopenapi__server_1_1cards__determine.html#af64d5a63ac2bf754f9c82e9550d35760',1,'openapi_server::cards_determine']]],
+  ['gid_18',['gid',['../classopenapi__server_1_1models_1_1games__post201__response_1_1_games_post201_response.html#a616bd94feda9b9b0eabf4f6182cf3ada',1,'openapi_server.models.games_post201_response.GamesPost201Response.gid(self)'],['../classopenapi__server_1_1models_1_1games__post201__response_1_1_games_post201_response.html#aca03ee15cd728b84e0149fc397ca8b76',1,'openapi_server.models.games_post201_response.GamesPost201Response.gid(self, str gid)']]]
+];

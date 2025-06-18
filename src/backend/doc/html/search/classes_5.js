@@ -1,0 +1,10 @@
+var searchData=
+[
+  ['gamesgidcurrentroundidget200response_0',['GamesGidCurrentRoundIdGet200Response',['../classopenapi__server_1_1models_1_1games__gid__current__round__id__get200__response_1_1_games_gidead3f2d7d92a1bf636e0478dc0d4de18.html',1,'openapi_server::models::games_gid_current_round_id_get200_response']]],
+  ['gamesgidcurrentroundnumberget200response_1',['GamesGidCurrentRoundNumberGet200Response',['../classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba.html',1,'openapi_server::models::games_gid_current_round_number_get200_response']]],
+  ['gamesgidnextplayeruidget200response_2',['GamesGidNextPlayerUidGet200Response',['../classopenapi__server_1_1models_1_1games__gid__next__player__uid__get200__response_1_1_games_gid_next_player_uid_get200_response.html',1,'openapi_server::models::games_gid_next_player_uid_get200_response']]],
+  ['gamesgidupdatescorespost200response_3',['GamesGidUpdateScoresPost200Response',['../classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response.html',1,'openapi_server::models::games_gid_update_scores_post200_response']]],
+  ['gamesgidusersuidcardcountget200response_4',['GamesGidUsersUidCardCountGet200Response',['../classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03.html',1,'openapi_server::models::games_gid_users_uid_card_count_get200_response']]],
+  ['gamesgidusersuidplayernumberget200response_5',['GamesGidUsersUidPlayerNumberGet200Response',['../classopenapi__server_1_1models_1_1games__gid__users__uid__player__number__get200__response_1_1_g09ed7e491e77f21248b22bb256f69854.html',1,'openapi_server::models::games_gid_users_uid_player_number_get200_response']]],
+  ['gamespost201response_6',['GamesPost201Response',['../classopenapi__server_1_1models_1_1games__post201__response_1_1_games_post201_response.html',1,'openapi_server::models::games_post201_response']]]
+];

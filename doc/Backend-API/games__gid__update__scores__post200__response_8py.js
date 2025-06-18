@@ -1,0 +1,4 @@
+var games__gid__update__scores__post200__response_8py =
+[
+    [ "openapi_server.models.games_gid_update_scores_post200_response.GamesGidUpdateScoresPost200Response", "classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response.html", "classopenapi__server_1_1models_1_1games__gid__update__scores__post200__response_1_1_games_gid_update_scores_post200_response" ]
+];

@@ -1,0 +1,24 @@
+# Projekt-Info
+PROJECT_NAME           = "Jass-Spiel Backend"
+PROJECT_BRIEF          = "Backend API für das Jass-Kartenspiel"
+PROJECT_VERSION        = "1.0"
+
+# Input-Verzeichnisse
+INPUT                  = ./openapi_server
+RECURSIVE              = YES
+FILE_PATTERNS          = *.py
+
+# Python-spezifisch
+OPTIMIZE_OUTPUT_FOR_C  = NO
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+
+# Output
+GENERATE_HTML          = YES
+HTML_OUTPUT            = doc/html
+GENERATE_LATEX         = NO
+
+# Python Docstrings
+PYTHON_DOCSTRING       = YES
+JAVADOC_AUTOBRIEF      = YES

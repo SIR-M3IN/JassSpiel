@@ -1,0 +1,4 @@
+var games__gid__current__round__number__get200__response_8py =
+[
+    [ "openapi_server.models.games_gid_current_round_number_get200_response.GamesGidCurrentRoundNumberGet200Response", "classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba.html", "classopenapi__server_1_1models_1_1games__gid__current__round__number__get200__response_1_1_gamesf6f82061bd1c75d84b7165340c203dba" ]
+];

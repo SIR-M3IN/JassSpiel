@@ -1,0 +1,4 @@
+var namespaceopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response =
+[
+    [ "GamesGidUsersUidCardCountGet200Response", "classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03.html", "classopenapi__server_1_1models_1_1games__gid__users__uid__card__count__get200__response_1_1_gameebb830e37143f263e6feb5af1dbc2b03" ]
+];

@@ -240,3 +240,11 @@ Diese Pakete werden im Projekt verwendet und müssen durch `flutter pub get` ver
 - python_dateutil >= 2.6.0
 - setuptools >= 21.0.0
 - Flask == 2.1.1
+
+
+### Funktionsblöcke/Architektur
+
+#### Backend
+Siehe Backend-API Dokumentation
+#### Frontend
+Siehe Frontend-API Dokumentation

@@ -1,0 +1,4 @@
+var namespaceopenapi__server_1_1models_1_1determine__winning__card__request =
+[
+    [ "DetermineWinningCardRequest", "classopenapi__server_1_1models_1_1determine__winning__card__request_1_1_determine_winning_card_request.html", "classopenapi__server_1_1models_1_1determine__winning__card__request_1_1_determine_winning_card_request" ]
+];

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the showTrumpfDialog function from the showTrumpfDialogPage library, for the Dart programming language.">
+  <title>showTrumpfDialog function - showTrumpfDialogPage library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">jassspiel</a></li>
+    <li><a href="../pages_showTrumpfDialogPage">pages\showTrumpfDialogPage.dart</a></li>
+    <li class="self-crumb">showTrumpfDialog function</li>
+  </ol>
+  <div class="self-name">showTrumpfDialog</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <div class="toggle" id="theme-button" title="Toggle brightness">
+    <label for="theme">
+      <input type="checkbox" id="theme" value="light-theme">
+      <span id="dark-theme-button" class="material-symbols-outlined">
+        dark_mode
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined">
+        light_mode
+      </span>
+    </label>
+  </div>
+</header>
+<main>
+  <div
+      id="dartdoc-main-content"
+      class="main-content"
+      data-above-sidebar="pages_showTrumpfDialogPage&#47;pages_showTrumpfDialogPage-library-sidebar.html"
+      data-below-sidebar="">
+      <div>
+<h1><span class="kind-function">showTrumpfDialog</span> function 
+ 
+</h1></div>
+
+    <section class="multi-line-signature">
+        
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span>&gt;</span></span>
+<span class="name ">showTrumpfDialog</span>(<wbr><ol class="parameter-list"> <li><span class="parameter" id="showTrumpfDialog-param-context"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a></span> <span class="parameter-name">context</span>, {</span></li>
+<li><span class="parameter" id="showTrumpfDialog-param-playerCards"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span>?</span> <span class="parameter-name">playerCards</span>, </span></li>
+</ol>})
+
+        
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Zeigt einen Dialog zur Auswahl der Trumpf-Farbe an.</p>
+<p>Öffnet einen modalen Dialog, der den Spieler auffordert, eine der vier
+Farben (Herz, Laub, Schella, Eichel) als Trumpf zu wählen. Der Dialog kann nicht
+geschlossen werden, ohne eine Auswahl zu treffen.</p>
+<p><code>context</code> Der BuildContext des aufrufenden Widgets.
+<code>playerCards</code> Optionale Liste von <a href="../jasskarte/Jasskarte-class.html">Jasskarte</a>, die dem Spieler gehören,
+  welche im Dialog als Hilfestellung angezeigt werden.</p>
+<p>Gibt einen <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a> zurück, der mit der ausgewählten Trumpf-Farbe als String
+(z.B. 'Herz') abgeschlossen wird, oder null, falls der Dialog anderweitig geschlossen wird.</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Future&lt;String?&gt; showTrumpfDialog(BuildContext context, {List&lt;Jasskarte&gt;? playerCards}) {
+  String? selectedTrumpf;
+
+  return showDialog&lt;String&gt;(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return PopScope(
+            canPop: false, &#47;&#47; Prevent back button from closing dialog
+            child: Dialog(
+            backgroundColor: Colors.transparent,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final screenWidth = constraints.maxWidth;
+                final screenHeight = constraints.maxHeight;
+                final dialogWidth = (screenWidth * 0.9).clamp(300.0, 800.0);
+                final availableHeight = screenHeight * 0.9;
+                final desiredMinHeight = 400.0;
+                final actualMinHeight = availableHeight &lt; desiredMinHeight ? availableHeight : desiredMinHeight;
+                return Center(
+                  child: Container(
+                    width: dialogWidth,
+                    constraints: BoxConstraints(
+                      minHeight: actualMinHeight,
+                      maxHeight: availableHeight,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.deepPurple,
+                          Colors.indigo,
+                          Colors.blue,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [                            Text(
+                              &#39;🎴 Trumpf wählen&#39;,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              &#39;Du musst einen Trumpf wählen!&#39;,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            if (playerCards != null &amp;&amp; playerCards.isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 20),
+                                child: Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        &#39;🃏 Deine Karten&#39;,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      SizedBox(
+                                        height: 80,
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: playerCards.length,
+                                          itemBuilder: (context, i) {
+                                            final karte = playerCards[i];
+                                            return Container(
+                                              margin: EdgeInsets.only(right: i &lt; playerCards.length - 1 ? 6 : 0),
+                                              width: 60,
+                                              height: 75,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(6),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.2),
+                                                    blurRadius: 4,
+                                                    offset: Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(6),
+                                                child: Image.asset(karte.path, fit: BoxFit.cover),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTrumpfOption(&#39;♥️ Herz&#39;, &#39;Herz&#39;, selectedTrumpf, (newValue) {
+                                      setState(() {
+                                        selectedTrumpf = newValue;
+                                      });
+                                    }, Colors.red),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildTrumpfOption(&#39;🍃 Laub&#39;, &#39;Laub&#39;, selectedTrumpf, (newValue) {
+                                      setState(() {
+                                        selectedTrumpf = newValue;
+                                      });
+                                    }, Colors.green),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildTrumpfOption(&#39;🔔 Schella&#39;, &#39;Schella&#39;, selectedTrumpf, (newValue) {
+                                      setState(() {
+                                        selectedTrumpf = newValue;
+                                      });
+                                    }, Colors.orange),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildTrumpfOption(&#39;🌰 Eichel&#39;, &#39;Eichel&#39;, selectedTrumpf, (newValue) {
+                                      setState(() {
+                                        selectedTrumpf = newValue;
+                                      });
+                                    }, Colors.brown),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: selectedTrumpf != null
+                                    ? () {
+                                        Navigator.of(context).pop(selectedTrumpf);
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  elevation: 5,
+                                ),                                child: Text(
+                                  &#39;Bestätigen&#39;,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),                    ),
+                  ),
+                );              },            ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">jassspiel</a></li>
+    <li><a href="../pages_showTrumpfDialogPage">showTrumpfDialogPage</a></li>
+    <li class="self-crumb">showTrumpfDialog function</li>
+</ol>
+
+    <h5>showTrumpfDialogPage library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-left-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    jassspiel
+      1.0.0+1
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

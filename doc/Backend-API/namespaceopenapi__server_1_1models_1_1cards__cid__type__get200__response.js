@@ -1,0 +1,4 @@
+var namespaceopenapi__server_1_1models_1_1cards__cid__type__get200__response =
+[
+    [ "CardsCidTypeGet200Response", "classopenapi__server_1_1models_1_1cards__cid__type__get200__response_1_1_cards_cid_type_get200_response.html", "classopenapi__server_1_1models_1_1cards__cid__type__get200__response_1_1_cards_cid_type_get200_response" ]
+];

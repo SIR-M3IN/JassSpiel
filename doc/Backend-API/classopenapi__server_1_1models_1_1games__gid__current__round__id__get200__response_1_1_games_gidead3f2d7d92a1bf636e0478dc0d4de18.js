@@ -1,0 +1,8 @@
+var classopenapi__server_1_1models_1_1games__gid__current__round__id__get200__response_1_1_games_gidead3f2d7d92a1bf636e0478dc0d4de18 =
+[
+    [ "__init__", "classopenapi__server_1_1models_1_1games__gid__current__round__id__get200__response_1_1_games_gidead3f2d7d92a1bf636e0478dc0d4de18.html#aaa4e6416e43053e669eed28d6d8615c3", null ],
+    [ "from_dict", "classopenapi__server_1_1models_1_1games__gid__current__round__id__get200__response_1_1_games_gidead3f2d7d92a1bf636e0478dc0d4de18.html#a4ae288164a704d21634d4b460ae6f162", null ],
+    [ "rid", "classopenapi__server_1_1models_1_1games__gid__current__round__id__get200__response_1_1_games_gidead3f2d7d92a1bf636e0478dc0d4de18.html#a2ba1b2b4f0637272499de335bf68a9a9", null ],
+    [ "rid", "classopenapi__server_1_1models_1_1games__gid__current__round__id__get200__response_1_1_games_gidead3f2d7d92a1bf636e0478dc0d4de18.html#a04759f7863a723f155739940ae3e50f2", null ],
+    [ "_rid", "classopenapi__server_1_1models_1_1games__gid__current__round__id__get200__response_1_1_games_gidead3f2d7d92a1bf636e0478dc0d4de18.html#a1a4065cad7e45ccc7f5f84ad145423fa", null ]
+];

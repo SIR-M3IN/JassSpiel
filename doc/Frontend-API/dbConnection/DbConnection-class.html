@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the DbConnection class from the dbConnection library, for the Dart programming language.">
+  <title>DbConnection class - dbConnection library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">jassspiel</a></li>
+    <li><a href="../dbConnection">dbConnection.dart</a></li>
+    <li class="self-crumb">DbConnection class</li>
+  </ol>
+  <div class="self-name">DbConnection</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <div class="toggle" id="theme-button" title="Toggle brightness">
+    <label for="theme">
+      <input type="checkbox" id="theme" value="light-theme">
+      <span id="dark-theme-button" class="material-symbols-outlined">
+        dark_mode
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined">
+        light_mode
+      </span>
+    </label>
+  </div>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="dbConnection&#47;dbConnection-library-sidebar.html"
+    data-below-sidebar="dbConnection&#47;DbConnection-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">DbConnection</span> class 
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>Stellt eine Verbindung zur Supabase-Datenbank her, um alle spielbezogenen Daten zu verwalten.</p>
+<p>Diese Klasse kapselt alle Methoden, die für die Interaktion mit dem Backend benötigt werden,
+einschließlich des Abrufens von Kartendaten, der Benutzerverwaltung, dem Erstellen und Beitreten von Spielen
+und der Verwaltung des Spielzustands.</p>
+</section>
+
+
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="DbConnection" class="callable">
+          <span class="name"><a href="../dbConnection/DbConnection/DbConnection.html">DbConnection</a></span><span class="signature">()</span>
+        </dt>
+        <dd>
+          Erstellt eine neue <a href="../dbConnection/DbConnection-class.html">DbConnection</a> und initialisiert den Supabase-Client.
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="client" class="property">
+  <span class="name"><a href="../dbConnection/DbConnection/client.html">client</a></span>
+  <span class="signature">&#8596; <a href="https://pub.dev/documentation/supabase/2.8.0/supabase/SupabaseClient-class.html">SupabaseClient</a></span>
+  
+
+</dt>
+<dd>
+  Die Supabase-Client-Instanz für Datenbankoperationen.
+  <div class="features"><span class="feature">late</span><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="newCard" class="property">
+  <span class="name"><a href="../dbConnection/DbConnection/newCard.html">newCard</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/foundation/ValueNotifier-class.html">ValueNotifier</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span>&gt;</span></span>
+  
+
+</dt>
+<dd>
+  Benachrichtiger für neue Kartenspiele, überträgt die Karten-ID, wenn eine neue Karte gespielt wird.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="addPlayerToGame" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/addPlayerToGame.html">addPlayerToGame</a></span><span class="signature">(<wbr><span class="parameter" id="addPlayerToGame-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span>, </span><span class="parameter" id="addPlayerToGame-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span>, </span><span class="parameter" id="addPlayerToGame-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">name</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Fügt einen Spieler zu einem bestimmten Spiel hinzu.
+  
+
+</dd>
+
+        <dt id="addPlayInRound" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/addPlayInRound.html">addPlayInRound</a></span><span class="signature">(<wbr><span class="parameter" id="addPlayInRound-param-rid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">rid</span>, </span><span class="parameter" id="addPlayInRound-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span>, </span><span class="parameter" id="addPlayInRound-param-cid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">cid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Zeichnet ein Kartenspiel in der Datenbank für eine bestimmte Runde auf.
+  
+
+</dd>
+
+        <dt id="createGame" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/createGame.html">createGame</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Erstellt ein neues Spiel mit einem eindeutigen Spielcode.
+  
+
+</dd>
+
+        <dt id="getAllCards" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getAllCards.html">getAllCards</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft alle verfügbaren Jass-Karten aus der Datenbank ab.
+  
+
+</dd>
+
+        <dt id="getCardByCid" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getCardByCid.html">getCardByCid</a></span><span class="signature">(<wbr><span class="parameter" id="getCardByCid-param-cid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">cid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft eine bestimmte Karte anhand ihrer eindeutigen Karten-ID (CID) ab.
+  
+
+</dd>
+
+        <dt id="getCardCount" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getCardCount.html">getCardCount</a></span><span class="signature">(<wbr><span class="parameter" id="getCardCount-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span>, </span><span class="parameter" id="getCardCount-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Zählt die Anzahl der Karten, die ein Benutzer in einem bestimmten Spiel hält.
+  
+
+</dd>
+
+        <dt id="getCardType" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getCardType.html">getCardType</a></span><span class="signature">(<wbr><span class="parameter" id="getCardType-param-cid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">cid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft den Kartentyp für eine bestimmte Karten-ID ab.
+  
+
+</dd>
+
+        <dt id="getCardValue" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getCardValue.html">getCardValue</a></span><span class="signature">(<wbr><span class="parameter" id="getCardValue-param-cid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">cid</span>, </span><span class="parameter" id="getCardValue-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Berechnet den Basiswert einer Karte für die Punktevergabe, unter Berücksichtigung, ob es sich um eine Trumpfkarte handelt.
+  
+
+</dd>
+
+        <dt id="getCardWorth" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getCardWorth.html">getCardWorth</a></span><span class="signature">(<wbr><span class="parameter" id="getCardWorth-param-cid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">cid</span>, </span><span class="parameter" id="getCardWorth-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Berechnet den Gesamtwert einer Karte für einen Stich, unter Berücksichtigung, ob es sich um eine Trumpfkarte handelt.
+  
+
+</dd>
+
+        <dt id="getMyHand" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getMyHand.html">getMyHand</a></span><span class="signature">(<wbr><span class="parameter" id="getMyHand-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die Kartenhand für den aktuellen Benutzer in einem bestimmten Spiel ab.
+  
+
+</dd>
+
+        <dt id="getNextUserUid" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getNextUserUid.html">getNextUserUid</a></span><span class="signature">(<wbr><span class="parameter" id="getNextUserUid-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span>, </span><span class="parameter" id="getNextUserUid-param-playernumber"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">playernumber</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die Benutzer-ID des nächsten Spielers in der Zugreihenfolge ab.
+  
+
+</dd>
+
+        <dt id="getOpenGames" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getOpenGames.html">getOpenGames</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/Map-class.html">Map</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>, <span class="type-parameter">dynamic</span>&gt;</span></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft eine Liste offener Spiele ab, die beigetreten werden können.
+  
+
+</dd>
+
+        <dt id="getOrCreateUid" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getOrCreateUid.html">getOrCreateUid</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die vorhandene Benutzer-ID (UID) aus dem lokalen Speicher ab
+oder erstellt eine neue, falls sie nicht existiert.
+  
+
+</dd>
+
+        <dt id="getPlayedCards" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getPlayedCards.html">getPlayedCards</a></span><span class="signature">(<wbr><span class="parameter" id="getPlayedCards-param-rid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">rid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die Karten ab, die in einer bestimmten Runde gespielt wurden.
+  
+
+</dd>
+
+        <dt id="getPlayerScore" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getPlayerScore.html">getPlayerScore</a></span><span class="signature">(<wbr><span class="parameter" id="getPlayerScore-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span>, </span><span class="parameter" id="getPlayerScore-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die aktuelle Punktzahl eines Spielers in einem bestimmten Spiel ab.
+  
+
+</dd>
+
+        <dt id="GetRoundID" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/GetRoundID.html">GetRoundID</a></span><span class="signature">(<wbr><span class="parameter" id="GetRoundID-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die neueste Runden-ID für ein bestimmtes Spiel ab.
+  
+
+</dd>
+
+        <dt id="getTrumpfSymbol" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getTrumpfSymbol.html">getTrumpfSymbol</a></span><span class="signature">(<wbr><span class="parameter" id="getTrumpfSymbol-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gibt das aktuelle Trumpf-Symbol für das angegebene Spiel zurück.
+  
+
+</dd>
+
+        <dt id="getUrCards" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getUrCards.html">getUrCards</a></span><span class="signature">(<wbr><span class="parameter" id="getUrCards-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span>, </span><span class="parameter" id="getUrCards-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die Karten ab, die der aktuelle Benutzer in einem bestimmten Spiel hält.
+  
+
+</dd>
+
+        <dt id="getUrPlayernumber" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getUrPlayernumber.html">getUrPlayernumber</a></span><span class="signature">(<wbr><span class="parameter" id="getUrPlayernumber-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span>, </span><span class="parameter" id="getUrPlayernumber-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die Spielernummer für den aktuellen Benutzer im angegebenen Spiel ab.
+  
+
+</dd>
+
+        <dt id="getWhichRound" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getWhichRound.html">getWhichRound</a></span><span class="signature">(<wbr><span class="parameter" id="getWhichRound-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die aktuelle Rundennummer für ein bestimmtes Spiel ab.
+  
+
+</dd>
+
+        <dt id="getWhosTurn" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getWhosTurn.html">getWhosTurn</a></span><span class="signature">(<wbr><span class="parameter" id="getWhosTurn-param-rid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">rid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ruft die Benutzer-ID des Spielers ab, der in der aktuellen Runde am Zug ist.
+  
+
+</dd>
+
+        <dt id="getWinningCard" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/getWinningCard.html">getWinningCard</a></span><span class="signature">(<wbr><span class="parameter" id="getWinningCard-param-cards"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span></span> <span class="parameter-name">cards</span>, </span><span class="parameter" id="getWinningCard-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span>, </span><span class="parameter" id="getWinningCard-param-firstCard"><span class="type-annotation"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span> <span class="parameter-name">firstCard</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ermittelt die Gewinnerkarte aus einer Liste von Karten basierend auf den Spielregeln.
+  
+
+</dd>
+
+        <dt id="isCodeAvailable" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/isCodeAvailable.html">isCodeAvailable</a></span><span class="signature">(<wbr><span class="parameter" id="isCodeAvailable-param-code"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">code</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Überprüft, ob ein Spielcode verfügbar ist (d.h. nicht bereits von einem anderen Spiel verwendet wird).
+  
+
+</dd>
+
+        <dt id="isTrumpf" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/isTrumpf.html">isTrumpf</a></span><span class="signature">(<wbr><span class="parameter" id="isTrumpf-param-cid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">cid</span>, </span><span class="parameter" id="isTrumpf-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Überprüft, ob eine bestimmte Karte eine Trumpfkarte im angegebenen Spiel ist.
+  
+
+</dd>
+
+        <dt id="joinGame" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/joinGame.html">joinGame</a></span><span class="signature">(<wbr><span class="parameter" id="joinGame-param-code"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">code</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Ermöglicht einem Spieler, einem bestehenden Spiel mit einem Spielcode beizutreten.
+  
+
+</dd>
+
+        <dt id="loadPlayers" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/loadPlayers.html">loadPlayers</a></span><span class="signature">(<wbr><span class="parameter" id="loadPlayers-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../spieler/Spieler-class.html">Spieler</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Lädt alle Spieler, die sich derzeit in einem bestimmten Spiel befinden.
+  
+
+</dd>
+
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="savePointsForUsers" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/savePointsForUsers.html">savePointsForUsers</a></span><span class="signature">(<wbr><span class="parameter" id="savePointsForUsers-param-cards"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span></span> <span class="parameter-name">cards</span>, </span><span class="parameter" id="savePointsForUsers-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span>, </span><span class="parameter" id="savePointsForUsers-param-winnerUid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">winnerUid</span>, </span><span class="parameter" id="savePointsForUsers-param-teammateUid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">teammateUid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Speichert die Punkte für die Benutzer basierend auf den im Stich gewonnenen Karten.
+  
+
+</dd>
+
+        <dt id="saveUserIfNeeded" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/saveUserIfNeeded.html">saveUserIfNeeded</a></span><span class="signature">(<wbr><span class="parameter" id="saveUserIfNeeded-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span>, </span><span class="parameter" id="saveUserIfNeeded-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">name</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Speichert oder aktualisiert die Informationen eines Benutzers in der Datenbank.
+  
+
+</dd>
+
+        <dt id="shuffleCards" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/shuffleCards.html">shuffleCards</a></span><span class="signature">(<wbr><span class="parameter" id="shuffleCards-param-cards"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../jasskarte/Jasskarte-class.html">Jasskarte</a></span>&gt;</span></span> <span class="parameter-name">cards</span>, </span><span class="parameter" id="shuffleCards-param-players"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../spieler/Spieler-class.html">Spieler</a></span>&gt;</span></span> <span class="parameter-name">players</span>, </span><span class="parameter" id="shuffleCards-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Mischt das Kartendeck und teilt die Karten an die Spieler im Spiel aus.
+  
+
+</dd>
+
+        <dt id="startNewRound" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/startNewRound.html">startNewRound</a></span><span class="signature">(<wbr><span class="parameter" id="startNewRound-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span>, </span><span class="parameter" id="startNewRound-param-whichround"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">whichround</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Startet eine neue Runde im Spiel und initialisiert sie in der Datenbank.
+  
+
+</dd>
+
+        <dt id="subscribeToPlayedCards" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/subscribeToPlayedCards.html">subscribeToPlayedCards</a></span><span class="signature">(<wbr><span class="parameter" id="subscribeToPlayedCards-param-currentRid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">currentRid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Abonniert Echtzeit-Updates für Karten, die in der angegebenen Runde gespielt werden.
+  
+
+</dd>
+
+        <dt id="toString" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  A string representation of this object.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="updateTrumpf" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/updateTrumpf.html">updateTrumpf</a></span><span class="signature">(<wbr><span class="parameter" id="updateTrumpf-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span>, </span><span class="parameter" id="updateTrumpf-param-trumpf"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">trumpf</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Aktualisiert den Trumpf-Status für Karten im Spiel.
+  
+
+</dd>
+
+        <dt id="updateWhosTurn" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/updateWhosTurn.html">updateWhosTurn</a></span><span class="signature">(<wbr><span class="parameter" id="updateWhosTurn-param-rid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">rid</span>, </span><span class="parameter" id="updateWhosTurn-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span></span>)
+    <span class="returntype parameter">&#8594; void</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Aktualisiert die Spielzug-Informationen in der Datenbank.
+  
+
+</dd>
+
+        <dt id="updateWinnerDB" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/updateWinnerDB.html">updateWinnerDB</a></span><span class="signature">(<wbr><span class="parameter" id="updateWinnerDB-param-uid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">uid</span>, </span><span class="parameter" id="updateWinnerDB-param-rid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">rid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Aktualisiert die Gewinner-Informationen im Runden-Datensatz.
+  
+
+</dd>
+
+        <dt id="waitForFourPlayers" class="callable">
+  <span class="name"><a href="../dbConnection/DbConnection/waitForFourPlayers.html">waitForFourPlayers</a></span><span class="signature">(<wbr><span class="parameter" id="waitForFourPlayers-param-gid"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">gid</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../spieler/Spieler-class.html">Spieler</a></span>&gt;</span></span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Wartet auf genau vier Spieler, die dem angegebenen Spiel beitreten.
+  
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">jassspiel</a></li>
+    <li><a href="../dbConnection">dbConnection</a></li>
+    <li class="self-crumb">DbConnection class</li>
+</ol>
+
+    <h5>dbConnection library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    jassspiel
+      1.0.0+1
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
