@@ -2,7 +2,7 @@
 
 ## 1. Spiel erstellen
 
-![](file:///C:/Users/merli/AppData/Roaming/marktext/images/2025-06-18-08-19-54-image.png?msec=1750229262400)
+![image](doc/images/picture_start_game)
 
 - Name eingeben
   
