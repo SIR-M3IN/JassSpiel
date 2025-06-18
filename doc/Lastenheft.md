@@ -17,7 +17,7 @@ Damit erfüllen wir die Projektanforderungen:
 
 ## Backend (DBI)
 
-- MariaDB-Datenbank für Spieler-, Spiele- und Ergebnisdaten.
+- Supabase-Datenbank für Spieler-, Spiele- und Ergebnisdaten.
 - REST-API (z.B. Python FastAPI) für die Kommunikation zwischen Frontend und Backend.
 - Benutzerrollen: „admin“ und „user“.
 - API-Endpunkte zur Abfrage von:
@@ -45,3 +45,10 @@ Damit erfüllen wir die Projektanforderungen:
 - **FastAPI (Python)** ermöglicht uns eine schnelle und flexible Entwicklung der REST-API.
 - **MariaDB** Speicherung aller Spiel- und Userdaten.
 - **Firebase** vielleicht für multiplayer.
+
+
+## Klassendiagramm
+[Klassendiagramm_v1](Klassendiagramm_v1.drawio)
+
+## ERM
+[ERM_v1](ERM_v1.drawio)

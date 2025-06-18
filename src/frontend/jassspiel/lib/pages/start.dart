@@ -64,7 +64,6 @@ class _StartPageState extends State<StartPage> {
   }  @override
   Widget build(BuildContext context) {
     final db = DbConnection();
-    final swagger = SwaggerConnection(baseUrl:  'http://localhost:8080');
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -148,7 +147,8 @@ class _StartPageState extends State<StartPage> {
                                 SizedBox(height: spacing),
                                 joinButton(db),
                               ],
-                            ),                      SizedBox(height: spacing * 2),
+                            ),                      
+                            SizedBox(height: spacing * 2),
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -162,7 +162,8 @@ class _StartPageState extends State<StartPage> {
                               offset: const Offset(0, 5),
                             ),
                           ],
-                        ),                        child: Column(
+                        ),                        
+                        child: Column(
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -390,8 +391,7 @@ class _StartPageState extends State<StartPage> {
         setState(() => _isLoading = false);
         return;
       }
-      //await db.addPlayerToGame(code, uid, name);
-      await swagger.joinGame(code);
+      db.addPlayerToGame(code, uid, name);
       if (!mounted) return;
       Navigator.pushNamed(context, '/init', arguments: {'gid': code, 'uid': uid});
     } catch (e) {
