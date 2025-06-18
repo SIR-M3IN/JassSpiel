@@ -1,16 +1,15 @@
 # jassspiel
 
-A new Flutter project.
+Ein Jass-Programm um gmüatlich a biz zum Jassa
 
-## Getting Started
+## Über das Projekt
 
-This project is a starting point for a Flutter application.
+Perfekt geeignet um mit 3 anderen Freunden eine entspannte Runde nach Vorarlberger Tradition zu Jassen
 
-A few resources to get you started if this is your first Flutter project:
+### Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+*   Erstellen und Beitreten von Spielräumen.
+*   Rundenbasierte Logik nach offiziellen Jass-Regeln.
+*   Auswahl der Trumpffarbe.
+*   Automatische Punkteberechnung und Gewinnerermittlung.
+*   Real-time-Updates über Supabase.
