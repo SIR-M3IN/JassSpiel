@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../dbConnection.dart';
 
 class UsersPage extends StatefulWidget {
   const UsersPage({super.key});
@@ -10,6 +10,7 @@ class UsersPage extends StatefulWidget {
 
 class _UsersPageState extends State<UsersPage> {
   final TextEditingController _nameController = TextEditingController();
+  final DbConnection _db = DbConnection();
   late Future<List<Map<String, dynamic>>> _userFuture;
 
   @override
@@ -17,16 +18,15 @@ class _UsersPageState extends State<UsersPage> {
     super.initState();
     _userFuture = fetchUsers();
   }
-
   Future<List<Map<String, dynamic>>> fetchUsers() async {
-    final response = await Supabase.instance.client
+    final response = await _db.client
         .from('User')
         .select();
     return List<Map<String, dynamic>>.from(response);
   }
 
   Future<void> insertUser(String name) async {
-    await Supabase.instance.client.from('User').insert({
+    await _db.client.from('User').insert({
       'name': name,
       'TotalPoints': 0,
       'GamesWon': 0,

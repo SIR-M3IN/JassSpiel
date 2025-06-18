@@ -3,18 +3,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase/supabase.dart';
 import 'package:jassspiel/spieler.dart';
 import 'package:jassspiel/jasskarte.dart';
 
 class DbConnection {
-  final SupabaseClient client = Supabase.instance.client;
+  late final SupabaseClient client;
   final Uuid _uuid = const Uuid();
-
-  static Future<void> initialize({required String url, required String anonKey}) async {
-    await Supabase.initialize(
-      url: url,
-      anonKey: anonKey,
+  DbConnection() {
+    // Initialize with your Supabase credentials
+    client = SupabaseClient(
+      'https://wzhaxvxfhdcrpyiswybf.supabase.co', 
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6aGF4dnhmaGRjcnB5aXN3eWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDA1MTEsImV4cCI6MjA2MjAxNjUxMX0.yzYZ4jHfAlq2CgpkN_oAue71LLNzAYzP0ABSj1YbFNs'
     );
   }
 
