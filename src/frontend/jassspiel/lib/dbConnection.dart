@@ -7,14 +7,19 @@ import 'package:supabase/supabase.dart';
 import 'package:jassspiel/spieler.dart';
 import 'package:jassspiel/jasskarte.dart';
 
-/// Provides a connection to the Supabase database to handle all game-related data.
+/// Stellt eine Verbindung zur Supabase-Datenbank her, um alle spielbezogenen Daten zu verwalten.
 ///
-/// This class encapsulates all the methods needed to interact with the backend,
-/// including fetching card data, managing users, creating and joining games,
-/// and handling game state.
+/// Diese Klasse kapselt alle Methoden, die für die Interaktion mit dem Backend benötigt werden,
+/// einschließlich des Abrufens von Kartendaten, der Benutzerverwaltung, dem Erstellen und Beitreten von Spielen
+/// und der Verwaltung des Spielzustands.
 class DbConnection {
+  /// Die Supabase-Client-Instanz für Datenbankoperationen.
   late final SupabaseClient client;
+  
+  /// UUID-Generator zum Erstellen eindeutiger Bezeichner.
   final Uuid _uuid = const Uuid();
+  
+  /// Erstellt eine neue [DbConnection] und initialisiert den Supabase-Client.
   DbConnection() {
     // Initialize with your Supabase credentials
     client = SupabaseClient(
@@ -22,11 +27,9 @@ class DbConnection {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6aGF4dnhmaGRjcnB5aXN3eWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDA1MTEsImV4cCI6MjA2MjAxNjUxMX0.yzYZ4jHfAlq2CgpkN_oAue71LLNzAYzP0ABSj1YbFNs'
     );
   }
-
-  /// Fetches all available Jass cards from the database.
+  /// Ruft alle verfügbaren Jass-Karten aus der Datenbank ab.
   ///
-  /// Returns a list of
-  ///  [Jasskarte] objects.
+  /// Gibt eine Liste von [Jasskarte]-Objekten zurück.
   Future<List<Jasskarte>> getAllCards() async {
     final response = await client
         .from('card')
@@ -43,11 +46,10 @@ class DbConnection {
     }
     return cards;
   }
-
-  /// Fetches a specific card by its unique card ID (CID).
+  /// Ruft eine bestimmte Karte anhand ihrer eindeutigen Karten-ID (CID) ab.
   ///
-  /// [cid] The unique identifier for the card.
-  /// Returns a [Jasskarte] object if found, otherwise throws an exception.
+  /// [cid] Der eindeutige Bezeichner für die Karte.
+  /// Gibt ein [Jasskarte]-Objekt zurück, falls gefunden, andernfalls wird eine Ausnahme ausgelöst.
   Future<Jasskarte> getCardByCid(String cid) async {
     final response = await client
         .from('card')
@@ -65,12 +67,11 @@ class DbConnection {
       throw Exception('Card with CID $cid not found');
     }
   }
-
-  /// Retrieves the existing user ID (UID) from local storage,
-  /// or creates a new one if it doesn't exist.
+  /// Ruft die vorhandene Benutzer-ID (UID) aus dem lokalen Speicher ab
+  /// oder erstellt eine neue, falls sie nicht existiert.
   ///
-  /// This ensures that the user has a persistent identity across sessions.
-  /// Returns the user's unique ID.
+  /// Dadurch wird sichergestellt, dass der Benutzer eine dauerhafte Identität über Sitzungen hinweg hat.
+  /// Gibt die eindeutige ID des Benutzers zurück.
   Future<String> getOrCreateUid() async {
     final prefs = await SharedPreferences.getInstance();
     var uid = prefs.getString('UID');
@@ -80,13 +81,12 @@ class DbConnection {
     }
     return uid;
   }
-
-  /// Saves or updates a user's information in the database.
+  /// Speichert oder aktualisiert die Informationen eines Benutzers in der Datenbank.
   ///
-  /// [uid] The user's unique ID.
-  /// [name] The user's display name.
-  /// If the user doesn't exist, a new record is created.
-  /// If the user exists, their name is updated.
+  /// [uid] Die eindeutige ID des Benutzers.
+  /// [name] Der Anzeigename des Benutzers.
+  /// Falls der Benutzer nicht existiert, wird ein neuer Datensatz erstellt.
+  /// Falls der Benutzer existiert, wird sein Name aktualisiert.
   Future<void> saveUserIfNeeded(String uid, String name) async {
     final existing = await client
         .from('User')
@@ -99,11 +99,10 @@ class DbConnection {
       await client.from('User').update({'name': name}).eq('UID', uid);
     }
   }
-
-  /// Creates a new game with a unique game code.
+  /// Erstellt ein neues Spiel mit einem eindeutigen Spielcode.
   ///
-  /// Generates a unique code, creates a new game record in the database,
-  /// and returns the game code.
+  /// Generiert einen eindeutigen Code, erstellt einen neuen Spieleintrag in der Datenbank
+  /// und gibt den Spielcode zurück.
   Future<String> createGame() async {
     String code;
     do {
@@ -118,12 +117,11 @@ class DbConnection {
     });
     return code;
   }
-
-  /// Allows a player to join an existing game using a game code.
+  /// Ermöglicht einem Spieler, einem bestehenden Spiel mit einem Spielcode beizutreten.
   ///
-  /// [code] The game code to join.
-  /// Increments the participant count for the game.
-  /// Returns `true` if the game was joined successfully, `false` otherwise.
+  /// [code] Der Spielcode zum Beitreten.
+  /// Erhöht die Teilnehmerzahl für das Spiel.
+  /// Gibt `true` zurück, wenn dem Spiel erfolgreich beigetreten wurde, andernfalls `false`.
   Future<bool> joinGame(String code) async {
     final resp = await client
         .from('games')
@@ -138,10 +136,10 @@ class DbConnection {
     return false;
   }
 
-/// Fetches the cards that have been played in a specific round.
+/// Ruft die Karten ab, die in einer bestimmten Runde gespielt wurden.
 ///
-/// [rid] The unique identifier for the round.
-/// Returns a list of [Jasskarte] objects that have been played in the round.
+/// [rid] Der eindeutige Bezeichner für die Runde.
+/// Gibt eine Liste von [Jasskarte]-Objekten zurück, die in der Runde gespielt wurden.
 Future<List<Jasskarte>> getPlayedCards(String rid) async {
   final response = await client
       .from('plays')
@@ -168,13 +166,12 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
   print('DEBUG getPlayedCards liefert ${playedCards.length} Karten zurück');
   return playedCards;
 }
-  
-  /// Adds a player to a specific game.
+    /// Fügt einen Spieler zu einem bestimmten Spiel hinzu.
   ///
-  /// [gid] The game ID.
-  /// [uid] The user ID of the player to add.
-  /// [name] The name of the player.
-  /// It ensures the user exists and assigns them the next available player number.
+  /// [gid] Die Spiel-ID.
+  /// [uid] Die Benutzer-ID des hinzuzufügenden Spielers.
+  /// [name] Der Name des Spielers.
+  /// Stellt sicher, dass der Benutzer existiert und weist ihm die nächste verfügbare Spielernummer zu.
   Future<void> addPlayerToGame(String gid, String uid, String name) async {
     await saveUserIfNeeded(uid, name);
 
@@ -200,11 +197,10 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       'playernumber': number,
     });
   }
-
-  /// Loads all players currently in a specific game.
+  /// Lädt alle Spieler, die sich derzeit in einem bestimmten Spiel befinden.
   ///
-  /// [gid] The game ID.
-  /// Returns a list of [Spieler] objects representing the players in the game.
+  /// [gid] Die Spiel-ID.
+  /// Gibt eine Liste von [Spieler]-Objekten zurück, die die Spieler im Spiel repräsentieren.
   Future<List<Spieler>> loadPlayers(String gid) async {
     final response = await client
         .from('usergame')
@@ -219,12 +215,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       );
     }).toList();
   }
-
-  /// Shuffles the deck of cards and deals them to the players in the game.
+  /// Mischt das Kartendeck und teilt die Karten an die Spieler im Spiel aus.
   ///
-  /// [cards] The list of all [Jasskarte] to be shuffled.
-  /// [players] The list of [Spieler] in the game.
-  /// [gid] The game ID.
+  /// [cards] Die Liste aller zu mischenden [Jasskarte].
+  /// [players] Die Liste der [Spieler] im Spiel.
+  /// [gid] Die Spiel-ID.
   Future<void> shuffleCards(List<Jasskarte> cards, List<Spieler> players, String gid) async {
     cards.shuffle();
     print('Shuffle Cards Called');
@@ -239,12 +234,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       }
     }
   }
-
-  /// Fetches the cards held by the current user in a specific game.
+  /// Ruft die Karten ab, die der aktuelle Benutzer in einem bestimmten Spiel hält.
   ///
-  /// [gid] The game ID.
-  /// [uid] The current user's ID.
-  /// Returns a list of [Jasskarte] objects representing the user's hand.
+  /// [gid] Die Spiel-ID.
+  /// [uid] Die ID des aktuellen Benutzers.
+  /// Gibt eine Liste von [Jasskarte]-Objekten zurück, die die Hand des Benutzers repräsentieren.
   Future<List<Jasskarte>> getUrCards(String gid, String uid) async {
     final response = await client
         .from('cardingames')
@@ -264,21 +258,19 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     }
     return cards;
   }
-
-  /// Fetches the hand of cards for the current user in a specific game.
+  /// Ruft die Kartenhand für den aktuellen Benutzer in einem bestimmten Spiel ab.
   ///
-  /// [gid] The game ID.
-  /// Returns a list of [Jasskarte] objects representing the user's hand.
+  /// [gid] Die Spiel-ID.
+  /// Gibt eine Liste von [Jasskarte]-Objekten zurück, die die Hand des Benutzers repräsentieren.
   Future<List<Jasskarte>> getMyHand(String gid) async {
     final uid = await getOrCreateUid();
     return await getUrCards(gid, uid);
   }
-
-  /// Counts the number of cards held by a user in a specific game.
+  /// Zählt die Anzahl der Karten, die ein Benutzer in einem bestimmten Spiel hält.
   ///
-  /// [gid] The game ID.
-  /// [uid] The user ID.
-  /// Returns the number of cards in the user's hand.
+  /// [gid] Die Spiel-ID.
+  /// [uid] Die Benutzer-ID.
+  /// Gibt die Anzahl der Karten in der Hand des Benutzers zurück.
   Future<int> getCardCount(String gid, String uid) async {
     final response = await client
         .from('cardingames')
@@ -286,18 +278,12 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
         .eq('UID', uid)
         .eq('GID', gid);
     return response.length;
-  }  
-  /// Records a card play in the database for a specific round.
+  }  /// Zeichnet ein Kartenspiel in der Datenbank für eine bestimmte Runde auf.
   ///
-  /// [rid] The round ID.
-  /// [uid] The user ID of the player making the play.
-  /// [cid] The card ID being played.
+  /// [rid] Die Runden-ID.
+  /// [uid] Die Benutzer-ID des Spielers, der den Zug macht.
+  /// [cid] Die ID der gespielten Karte.
   Future<void> addPlayInRound(String rid, String uid, String cid) async {
-    final existingPlays = await client
-        .from('plays')
-        .select('CID')
-        .eq('RID', rid);
-
     await client.from('plays').insert({
       'RID': rid,
       'UID': uid,
@@ -305,11 +291,10 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     });    
     print('DEBUG: Card $cid for player $uid in round $rid inserted');
   }
-
-  /// Retrieves the most recent round ID for a specific game.
+  /// Ruft die neueste Runden-ID für ein bestimmtes Spiel ab.
   ///
-  /// [gid] The game ID.
-  /// Returns the round ID, or an empty string if no rounds are found.
+  /// [gid] Die Spiel-ID.
+  /// Gibt die Runden-ID zurück oder einen leeren String, falls keine Runden gefunden werden.
   Future<String> GetRoundID(String gid) async {
     final response = await client
         .from('rounds')
@@ -325,12 +310,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     }
   }  
 
-
-  /// Checks if a specific card is a trump card in the given game.
+  /// Überprüft, ob eine bestimmte Karte eine Trumpfkarte im angegebenen Spiel ist.
   ///
-  /// [cid] The card ID.
-  /// [gid] The game ID.
-  /// Returns `true` if the card is a trump card, `false` otherwise.
+  /// [cid] Die Karten-ID.
+  /// [gid] Die Spiel-ID.
+  /// Gibt `true` zurück, wenn die Karte eine Trumpfkarte ist, andernfalls `false`.
   Future<bool> isTrumpf(String cid, String gid) async {
     final response = await client
       .from('cardingames')
@@ -341,22 +325,20 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     print('DEBUG isTrumpf response: $response');
     return response?['isTrumpf'] as bool? ?? false;
   }
-
-  /// Retrieves the card type for a specific card ID.
+  /// Ruft den Kartentyp für eine bestimmte Karten-ID ab.
   ///
-  /// [cid] The card ID.
-  /// Returns the card type as a string.
+  /// [cid] Die Karten-ID.
+  /// Gibt den Kartentyp als String zurück.
   Future<String> getCardType(String cid) async {
     final response = await client.from('card').select('cardtype').eq('CID', cid).maybeSingle();
     print('DEBUG getCardType response: $response');
     return response?['cardtype'] as String? ?? '';
   }
-
-  /// Calculates the base value of a card for scoring, considering if it's a trump card.
+  /// Berechnet den Basiswert einer Karte für die Punktevergabe, unter Berücksichtigung, ob es sich um eine Trumpfkarte handelt.
   ///
-  /// [cid] The card ID.
-  /// [gid] The game ID.
-  /// Returns the card value as an integer.
+  /// [cid] Die Karten-ID.
+  /// [gid] Die Spiel-ID.
+  /// Gibt den Kartenwert als ganze Zahl zurück.
   Future<int> getCardValue(String cid, String gid) async {
     String cardType = await getCardType(cid);
     if (await isTrumpf(cid, gid) == true) {
@@ -396,12 +378,11 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       }
     }
   }
-
-  /// Calculates the total worth of a card for a trick, considering if it's a trump card.
+  /// Berechnet den Gesamtwert einer Karte für einen Stich, unter Berücksichtigung, ob es sich um eine Trumpfkarte handelt.
   ///
-  /// [cid] The card ID.
-  /// [gid] The game ID.
-  /// Returns the card worth as an integer.
+  /// [cid] Die Karten-ID.
+  /// [gid] Die Spiel-ID.
+  /// Gibt den Kartenwert als ganze Zahl zurück.
   Future<int> getCardWorth(String cid, String gid) async {
     if (await isTrumpf(cid, gid)) {
       switch (await getCardType(cid)) {
@@ -451,14 +432,13 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
       }
     }
   }
-
-  /// Saves the points for the users based on the cards won in a trick.
+  /// Speichert die Punkte für die Benutzer basierend auf den im Stich gewonnenen Karten.
   ///
-  /// [cards] The list of cards won in the trick.
-  /// [gid] The game ID.
-  /// [winnerUid] The user ID of the trick winner.
-  /// [teammateUid] The user ID of the trick winner's teammate.
-  /// Returns the total points scored.
+  /// [cards] Die Liste der im Stich gewonnenen Karten.
+  /// [gid] Die Spiel-ID.
+  /// [winnerUid] Die Benutzer-ID des Stichgewinners.
+  /// [teammateUid] Die Benutzer-ID des Teamkollegen des Stichgewinners.
+  /// Gibt die Gesamtpunktzahl zurück.
   Future<int> savePointsForUsers(List<Jasskarte> cards, String gid, String winnerUid, String teammateUid) async {
     int totalPoints = 0;
     print(cards.length);
@@ -486,13 +466,12 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
 
     return totalPoints;
   }  
-  
-  /// Determines the winning card from a list of cards based on game rules.
+    /// Ermittelt die Gewinnerkarte aus einer Liste von Karten basierend auf den Spielregeln.
   ///
-  /// [cards] The list of cards to evaluate.
-  /// [gid] The game ID.
-  /// [firstCard] A reference card to determine the winning criteria.
-  /// Returns the user ID of the player who played the winning card.
+  /// [cards] Die Liste der zu bewertenden Karten.
+  /// [gid] Die Spiel-ID.
+  /// [firstCard] Eine Referenzkarte zur Bestimmung der Gewinnkriterien.
+  /// Gibt die Benutzer-ID des Spielers zurück, der die Gewinnerkarte gespielt hat.
   Future<String> getWinningCard(List<Jasskarte> cards, String gid, Jasskarte firstCard) async {
     Jasskarte? winningCard;
     for (var card in cards) {
@@ -513,15 +492,16 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     print('WINNINGUID: ${response?['UID']}');
     return response?['UID'] as String? ?? '';
   }
-
-  /// Updates the winner information in the round record.
+  /// Aktualisiert die Gewinner-Informationen im Runden-Datensatz.
   ///
-  /// [uid] The user ID of the winner.
-  /// [rid] The round ID.
+  /// [uid] Die Benutzer-ID des Gewinners.
+  /// [rid] Die Runden-ID.
   Future<void> updateWinnerDB(String uid, String rid) async{
     await client.from('rounds').update({'winnerid': uid}).eq('RID', rid);
-  }
-
+  }  /// Wartet auf genau vier Spieler, die dem angegebenen Spiel beitreten.
+  ///
+  /// [gid] Die Spiel-ID, die auf Spielerbeitritte überwacht werden soll.
+  /// Gibt einen [Future] zurück, der mit einer Liste von [Spieler] abgeschlossen wird, sobald 4 Spieler beigetreten sind.
   // Mit hilfe von KI: Hilf mir das ich warte bis 4 Spieler im Spiel sind
   Future<List<Spieler>> waitForFourPlayers(String gid) {
     final completer = Completer<List<Spieler>>();
@@ -544,56 +524,69 @@ Future<List<Jasskarte>> getPlayedCards(String rid) async {
     return completer.future;
   }
   
+/// Kanal für Echtzeit-Spiel-Updates.
 RealtimeChannel? _playsChannel;
+
+/// Benachrichtiger für neue Kartenspiele, überträgt die Karten-ID, wenn eine neue Karte gespielt wird.
 final ValueNotifier<String?> newCard = ValueNotifier(null);
 
+/// Abonniert Echtzeit-Updates für Karten, die in der angegebenen Runde gespielt werden.
+///
+/// [currentRid] Die Runden-ID, die auf neue Kartenspiele überwacht werden soll.
+/// Diese Methode richtet einen Echtzeit-Listener ein, der [newCard] aktualisiert, wenn Karten gespielt werden.
 Future<void> subscribeToPlayedCards(String currentRid) async{
   if (currentRid.isEmpty) return;
-  // if a previous subscription exists, remove it properly
-  if (_playsChannel != null) {
-    client.removeChannel(_playsChannel!);
-    
+  try {    
+    if (_playsChannel != null) {
+      try {
+        client.removeChannel(_playsChannel!);
+      } catch (e) {
+        print('Channel removal error (ignored): $e');
+      }
+    }
+    _playsChannel = client
+        .channel('public:plays:RID=eq.$currentRid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'plays',
+          callback: (payload) {
+          final newRecord = payload.newRecord;
+          // payload.newRecord is non-null when callback runs
+          final newCid = newRecord['CID'];
+          if (newCid != null) {
+            newCard.value = newCid;
+          }
+          },
+        )
+        .subscribe();
+
+    currentRid = currentRid;
+  } catch (e) {
+    print('Realtime subscription error (ignored): $e');
+    // Continue without realtime updates - game will still work
   }
-  _playsChannel = client
-      .channel('public:plays:RID=eq.$currentRid')
-      .onPostgresChanges(
-        event: PostgresChangeEvent.insert,
-        schema: 'public',
-        table: 'plays',
-        callback: (payload) {
-        final newRecord = payload.newRecord;
-        // payload.newRecord is non-null when callback runs
-        final newCid = newRecord['CID'];
-        if (newCid != null) {
-          newCard.value = newCid;
-          
-        }
-        },
-  
-      )
-      .subscribe();
-
-  currentRid = currentRid;
 }
-
+  /// Generiert einen zufälligen 4-stelligen Spielcode mit alphanumerischen Zeichen.
+  ///
+  /// Schließt verwirrende Zeichen wie 'I', 'O', '0', '1' für bessere Benutzerfreundlichkeit aus.
+  /// Gibt einen String mit dem generierten Code zurück.
   String _generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final rnd = Random();
     return List.generate(4, (_) => chars[rnd.nextInt(chars.length)]).join();
   }
-
-  /// Checks if a game code is available (i.e., not already taken by another game).
+  /// Überprüft, ob ein Spielcode verfügbar ist (d.h. nicht bereits von einem anderen Spiel verwendet wird).
   ///
-  /// [code] The game code to check.
-  /// Returns `true` if the code is available, `false` otherwise.
+  /// [code] Der zu überprüfende Spielcode.
+  /// Gibt `true` zurück, wenn der Code verfügbar ist, andernfalls `false`.
   Future<bool> isCodeAvailable(String code) async {
     final resp = await client.from('games').select('GID').eq('GID', code).maybeSingle();
     return resp == null;
-  }  
-  /// Starts a new round in the game, initializing it in the database.
+  }    /// Startet eine neue Runde im Spiel und initialisiert sie in der Datenbank.
   ///
-  /// [gid] The game ID.
-  /// [whichround] The current round number.
+  /// [gid] Die Spiel-ID.
+  /// [whichround] Die aktuelle Rundennummer.
   Future<void> startNewRound(String gid, int whichround) async {
     await client.from('rounds').insert({
       'GID': gid,
@@ -601,11 +594,10 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     });    
 
   }
-
-  /// Retrieves the current round number for a specific game.
+  /// Ruft die aktuelle Rundennummer für ein bestimmtes Spiel ab.
   ///
-  /// [gid] The game ID.
-  /// Returns the round number, or -1 if no rounds are found.
+  /// [gid] Die Spiel-ID.
+  /// Gibt die Rundennummer zurück oder -1, falls keine Runden gefunden werden.
   Future<int> getWhichRound(String gid) async {
     final response = await client
         .from('rounds')
@@ -621,19 +613,17 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       return -1;
     }
   }
-
-  /// Updates the player turn information in the database.
+  /// Aktualisiert die Spielzug-Informationen in der Datenbank.
   ///
-  /// [rid] The round ID.
-  /// [uid] The user ID of the player whose turn it is.
+  /// [rid] Die Runden-ID.
+  /// [uid] Die Benutzer-ID des Spielers, der am Zug ist.
   void updateWhosTurn(String rid, String uid) async {
     await client.from('rounds').update({'whoIsAtTurn': uid}).eq('RID', rid);
   }
-
-  /// Retrieves the user ID of the player whose turn it is in the current round.
+  /// Ruft die Benutzer-ID des Spielers ab, der in der aktuellen Runde am Zug ist.
   ///
-  /// [rid] The round ID.
-  /// Returns the user ID as a string.
+  /// [rid] Die Runden-ID.
+  /// Gibt die Benutzer-ID als String zurück.
   Future<String> getWhosTurn(String rid) async {
     final response = await client
       .from('rounds')
@@ -647,12 +637,11 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
     return '';
   }
-
-  /// Retrieves the player number for the current user in the specified game.
+  /// Ruft die Spielernummer für den aktuellen Benutzer im angegebenen Spiel ab.
   ///
-  /// [uid] The user ID.
-  /// [gid] The game ID.
-  /// Returns the player number as an integer.
+  /// [uid] Die Benutzer-ID.
+  /// [gid] Die Spiel-ID.
+  /// Gibt die Spielernummer als ganze Zahl zurück.
   Future<int> getUrPlayernumber(String uid, String gid) async {
     final response = await client
       .from('usergame')
@@ -665,12 +654,11 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
     }
     else{ throw Exception('Error');}
   }
-
-  /// Retrieves the user ID of the next player in turn order.
+  /// Ruft die Benutzer-ID des nächsten Spielers in der Zugreihenfolge ab.
   ///
-  /// [gid] The game ID.
-  /// [playernumber] The player number to find the next user for.
-  /// Returns the user ID as a string.
+  /// [gid] Die Spiel-ID.
+  /// [playernumber] Die Spielernummer, für die der nächste Benutzer gefunden werden soll.
+  /// Gibt die Benutzer-ID als String zurück.
   Future<String> getNextUserUid(String gid, int playernumber) async{
     final response = await client
       .from('usergame')
@@ -683,11 +671,10 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       }
       else {throw Exception('Error in getNextUserUid gid: $gid playernumber $playernumber');}
   }    
-  
-  /// Updates the trumpf status for cards in the game.
+    /// Aktualisiert den Trumpf-Status für Karten im Spiel.
   ///
-  /// [gid] The game ID.
-  /// [trumpf] The symbol of the trumpf card.
+  /// [gid] Die Spiel-ID.
+  /// [trumpf] Das Symbol der Trumpfkarte.
   Future<void> updateTrumpf(String gid, String trumpf) async {
     await client.from('cardingames')
         .update({'isTrumpf': false})
@@ -710,10 +697,9 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       print('DEBUG: ${trumpfCardIds.length} cards of $trumpf for GID $gid set to true');
     }
   } 
-
-  /// Retrieves a list of open games available for joining.
+  /// Ruft eine Liste offener Spiele ab, die beigetreten werden können.
   ///
-  /// Returns a list of maps containing game ID, room name, and participant count.
+  /// Gibt eine Liste von Maps zurück, die Spiel-ID, Raumname und Teilnehmerzahl enthalten.
   Future<List<Map<String, dynamic>>> getOpenGames() async {
     final response = await client
         .from('games')
@@ -722,12 +708,11 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
         .lt('participants', 4);
     return List<Map<String, dynamic>>.from(response as List);
   }
-
-  /// Retrieves the current score of a player in a specific game.
+  /// Ruft die aktuelle Punktzahl eines Spielers in einem bestimmten Spiel ab.
   ///
-  /// [uid] The user ID.
-  /// [gid] The game ID.
-  /// Returns the score as an integer.
+  /// [uid] Die Benutzer-ID.
+  /// [gid] Die Spiel-ID.
+  /// Gibt die Punktzahl als ganze Zahl zurück.
   Future<int> getPlayerScore(String uid, String gid) async {
     final response = await client
         .from('usergame')
@@ -740,9 +725,10 @@ Future<void> subscribeToPlayedCards(String currentRid) async{
       return response['score'] as int;
     }
     return 0;
-  }
-
-  /// Returns the current trumpf symbol for the given game, or null if not set
+  }  /// Gibt das aktuelle Trumpf-Symbol für das angegebene Spiel zurück.
+  ///
+  /// [gid] Die Spiel-ID, für die das Trumpf-Symbol überprüft werden soll.
+  /// Gibt das Trumpf-Symbol als String zurück oder null, falls nicht gesetzt.
   Future<String?> getTrumpfSymbol(String gid) async {
     // Find a card marked as trumpf in this game
     final response = await client

@@ -1,5 +1,4 @@
-/// @file start.dart
-/// @brief Startseite der Jass-Anwendung
+/// Startseite der Jass-Anwendung.
 ///
 /// Diese Datei enthält die UI und Logik für die Startseite. Benutzer können hier:
 /// - Ihren Spielernamen eingeben und speichern.
@@ -12,26 +11,35 @@ import 'package:jassspiel/dbConnection.dart';
 import 'package:jassspiel/logger.util.dart';
 import 'package:jassspiel/swaggerConnection.dart';
 
-/// @brief Die Startseite der Anwendung.
+/// Die Startseite der Anwendung.
 ///
 /// Dieses Widget ist der Einstiegspunkt für den Benutzer. Es ermöglicht das Erstellen
-/// oder Beitreten eines Spiels und zeigt eine Liste der verfügbaren Spielräume an.
+/// oder Beitreten zu einem Spiel und zeigt eine Liste verfügbarer Spielräume an.
 class StartPage extends StatefulWidget {
+  /// Erstellt eine [StartPage].
   const StartPage({super.key});
 
   @override
   State<StartPage> createState() => _StartPageState();
 }
 
-/// @brief State-Management für die [StartPage].
+/// Zustandsverwaltung für die [StartPage].
 ///
-// Verwaltet die Eingabefelder für Name und Code, den Ladezustand und die
+/// Verwaltet die Eingabefelder für Name und Code, den Ladezustand und die
 /// Interaktion mit der Datenbank zum Erstellen, Beitreten und Auflisten von Spielen.
-class _StartPageState extends State<StartPage> {
+class _StartPageState extends State<StartPage> {  /// Text-Controller für das Spielername-Eingabefeld.
   final _nameController = TextEditingController();
+  
+  /// Text-Controller für das Spielcode-Eingabefeld.
   final _codeController = TextEditingController();
+  
+  /// Logger-Instanz für Debugging und Überwachung.
   final log = getLogger();
+  
+  /// Flag, das anzeigt, ob gerade eine Operation lädt.
   bool _isLoading = false;
+  
+  /// Future, das zur Liste offener Spiele aufgelöst wird.
   Future<List<Map<String, dynamic>>>? _openGamesFuture;
 
   @override
@@ -47,27 +55,23 @@ class _StartPageState extends State<StartPage> {
       }
     });
     _openGamesFuture = _fetchOpenGames();
-  }
-
-  /// @brief Ruft die Liste der offenen Spiele von der Datenbank ab.
+  }  /// Holt die Liste offener Spiele aus der Datenbank.
+  ///
+  /// Gibt einen [Future] zurück, der mit einer Liste von Spieldaten-Maps abgeschlossen wird.
   Future<List<Map<String, dynamic>>> _fetchOpenGames() {
     log.d('Fetching open games');
     return DbConnection().getOpenGames();
-  }
-
-  /// @brief Speichert den Spielernamen lokal für zukünftige Sitzungen.
+  }  /// Speichert den Spielernamen lokal für zukünftige Sitzungen.
   ///
-  /// @param name Der zu speichernde Spielername.
+  /// [name] Der zu speichernde Spielername.
   Future<void> _saveName(String name) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('name', name);
     log.d('Saved player name: $name');
-  }
-
-  /// @brief Zeigt eine [SnackBar] mit einer Nachricht an.
+  }  /// Zeigt eine [SnackBar] mit einer Nachricht an.
   ///
-  /// @param msg Die anzuzeigende Nachricht.
-  /// @param color Die optionale Hintergrundfarbe der SnackBar.
+  /// [msg] Die anzuzeigende Nachricht.
+  /// [color] Die optionale Hintergrundfarbe der SnackBar.
   void _showSnack(String msg, [Color? color]) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -297,10 +301,11 @@ class _StartPageState extends State<StartPage> {
       ),
     );
   }
-
-  /// @brief Erstellt den "Spiel starten" Button.
+  /// Creates the "Start Game" button.
   ///
-  /// @param db Eine Instanz von [DbConnection] für Datenbankoperationen.
+  /// [db] An instance of [DbConnection] for database operations.
+  /// 
+  /// Returns a styled [ElevatedButton] widget for starting a new game.
   Widget startButton(DbConnection db) {
     return ElevatedButton(
       onPressed: _isLoading ? null : _onStartPressed,
@@ -322,10 +327,11 @@ class _StartPageState extends State<StartPage> {
             ),
     );
   }
-
-  /// @brief Erstellt den "Spiel beitreten" Button.
+  /// Creates the "Join Game" button.
   ///
-  /// @param db Eine Instanz von [DbConnection] für Datenbankoperationen.
+  /// [db] An instance of [DbConnection] for database operations.
+  /// 
+  /// Returns a styled [ElevatedButton] widget for joining an existing game.
   Widget joinButton(DbConnection db) {
     return ElevatedButton(
       onPressed: _onJoinPressed,
@@ -345,11 +351,10 @@ class _StartPageState extends State<StartPage> {
       ),
     );
   }
-
-  /// @brief Behandelt die Logik, wenn der "Spiel starten" Button gedrückt wird.
+  /// Handles the logic when the "Start Game" button is pressed.
   ///
-  /// Validiert den Spielernamen, erstellt ein neues Spiel, fügt den Spieler hinzu
-  /// und navigiert zum Initialisierungsbildschirm des Spiels.
+  /// Validates the player name, creates a new game, adds the player
+  /// and navigates to the game initialization screen.
   void _onStartPressed() async {
     setState(() => _isLoading = true);
     final name = _nameController.text.trim();
@@ -378,11 +383,10 @@ class _StartPageState extends State<StartPage> {
       setState(() => _isLoading = false);
     }
   }
-
-  /// @brief Behandelt die Logik, wenn der "Spiel beitreten" Button gedrückt wird.
+  /// Handles the logic when the "Join Game" button is pressed.
   ///
-  /// Validiert den Spielernamen und den Spielcode, tritt dem Spiel bei,
-  /// fügt den Spieler hinzu und navigiert zum Initialisierungsbildschirm.
+  /// Validates the player name and game code, joins the game,
+  /// adds the player and navigates to the initialization screen.
   void _onJoinPressed() async {
     final name = _nameController.text.trim();
     final code = _codeController.text.trim();
@@ -411,10 +415,9 @@ class _StartPageState extends State<StartPage> {
     log.d('Added player to game, navigating to initialization');
     Navigator.pushNamed(context, '/init', arguments: {'gid': code, 'uid': uid});
   }
-
-  /// @brief Behandelt die Logik zum Beitreten eines Spiels direkt aus der Liste.
+  /// Handles the logic for joining a game directly from the room list.
   ///
-  /// @param code Der Spielcode des Raumes, dem beigetreten werden soll.
+  /// [code] The game code of the room to join.
   void _joinRoomByCode(String code) async {
     setState(() => _isLoading = true);
     final name = _nameController.text.trim();
