@@ -18,8 +18,6 @@
 
 * oder bei Available Rooms nach gewünschtem Spiel suchen
 
-
-
 # 3. Spielen
 
 <img title="" src="file:///C:/Users/merli/AppData/Roaming/marktext/images/2025-06-18-08-40-13-image.png" alt="" width="465">

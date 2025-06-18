@@ -1,7 +1,5 @@
 # Dokumentation:
 
-
-
 ## Welche Softwarevoraussetzungen werden benötigt (mit Versionen)
 
 ## Systemvoraussetzungen
@@ -24,31 +22,6 @@ Version: 3.7.2
 **Flutter DevTools**  
 Version: 2.42.3
 
-## Entwicklungsumgebungen
-
-**Visual Studio Build Tools 2022**  
-Version: 17.13.35818.85  
-Benötigt für Windows Desktop Apps  
-Windows 10 SDK: Version 10.0.22621.0
-
-**Android Studio**  
-Version: 2024.3  
-Installiert: OpenJDK 21.0.6  
-Erforderlich für Android-Entwicklung  
-Flutter-Plugin und Dart-Plugin verfügbar über JetBrains Marketplace
-
-**VS Code (optional)**  
-Version: 1.101.0  
-Flutter-Extension Version: 3.112.0  
-Wird alternativ zu Android Studio verwendet oder parallel
-
-**Android SDK**  
-Pfad: `C:\Android\Sdk`  
-Status: Nicht korrekt installiert  
-Fehlermeldung: Kein gültiges SDK gefunden  
-Lösung: Android Studio starten und den SDK-Setup-Assistenten verwenden  
-Alternativ: `flutter config --android-sdk <Pfad>` zur Korrektur
-
 ## Abhängigkeiten aus pubspec.yaml
 
 Diese Pakete werden im Projekt verwendet und müssen durch `flutter pub get` verfügbar sein:
@@ -61,8 +34,6 @@ Diese Pakete werden im Projekt verwendet und müssen durch `flutter pub get` ver
 - `http: ^0.13.6`  
 - `cupertino_icons: ^1.0.8`  
 - `flutter_lints: ^5.0.0` (nur für Entwicklung)
-
-
 
 ---
 
@@ -155,5 +126,19 @@ Gibt zurück, die wievielte Runde aktuell läuft. Nützlich für Anzeigen oder R
 ### `Future<void> updateWinner(String rid, String uid)`
 
 Speichert den Runden-Gewinner auf dem Server. Die Methode wird aufgerufen, nachdem die Gewinnkarte bestimmt wurde.
+
+# Mögliche Probleme und ihre Lösung:
+
+Wenn ein Spieler keine Internetverbindung mehr hat könnte das Spiel pausieren und warten bis er wieder da ist.
+
+Die Rooms werden nicht gelöscht solang sie nicht ganz gefüllt sind und bleiben unendlich. -> Man könnte schauen ob überhaupt noch jemand im Room ist der wartet und wenn nicht ihn löschen. 
+
+
+
+# Wie wurde die Software getestet?
+
+Unit-Tests
+
+Meistens 4 Terminals gestartet, Room erstellt und alle dem selben Spiel gejoined.
 
 
