@@ -1,3 +1,6 @@
+# Link für exe:
+https://drive.google.com/drive/folders/1yz2-ojZfXAgDRVsN8vFamoGy_GXcxVFt?usp=drive_link
+
 # Tutorial Jassspiel
 
 ## 1. Spiel erstellen
