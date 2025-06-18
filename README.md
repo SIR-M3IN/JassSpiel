@@ -2,7 +2,7 @@
 
 ## 1. Spiel erstellen
 
-![image](doc/images/picture_start_game)
+![image](doc/images/picture_start_game.png)
 
 - Name eingeben
   
@@ -22,7 +22,7 @@
 
 # 3. Spielen
 
-![](file:///C:/Users/merli/AppData/Roaming/marktext/images/2025-06-18-08-40-13-image.png?msec=1750229259268)
+![image](doc/images/picture_choose_trumpf.png)
 
 ## 3.1 Trumpf wählen
 
@@ -30,7 +30,7 @@
 
 ## 3.2 Karten Spielen
 
-![](file:///C:/Users/merli/AppData/Roaming/marktext/images/2025-06-18-08-43-39-image.png?msec=1750229253282)
+![image](doc/images/picture_in_game.png)
 
 - Wenn die Anzeige "Am Zug" Orang ist und etwas wie "Du bist am Zug!" steht kann man eine Karte (Beachte die Jassregeln) in die Mitte Ziehen
 
