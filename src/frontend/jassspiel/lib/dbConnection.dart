@@ -25,7 +25,8 @@ class DbConnection {
 
   /// Fetches all available Jass cards from the database.
   ///
-  /// Returns a list of [Jasskarte] objects.
+  /// Returns a list of
+  ///  [Jasskarte] objects.
   Future<List<Jasskarte>> getAllCards() async {
     final response = await client
         .from('card')

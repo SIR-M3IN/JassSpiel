@@ -7,8 +7,9 @@ import 'package:jassspiel/logger.util.dart';
 class SwaggerConnection {
   final String baseUrl;
   final log = getLogger();
+  final http.Client client;
 
-  SwaggerConnection({required this.baseUrl});
+  SwaggerConnection({required this.baseUrl, http.Client? client}) : client = client ?? http.Client();
 
   /// Sendet einen PUT-Request, um einen Benutzer zu erstellen oder zu aktualisieren. 
   /// Falls der Benutzer (uid) schon existiert, wird sein Name überschrieben. 
@@ -16,7 +17,7 @@ class SwaggerConnection {
   /// Erfolgreiche Antworten haben Statuscode 200 oder 201.
   Future<void> upsertUser(String uid, String name) async {
     final uri = Uri.parse('$baseUrl/users/$uid');
-    final resp = await http.put(
+    final resp = await client.put(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'name': name}),
@@ -31,7 +32,7 @@ class SwaggerConnection {
   /// Diese ID wird vom Client verwendet, um weitere Spielaktionen dem richtigen Spiel zuzuordnen.
   Future<String> createGame() async {
     final uri = Uri.parse('$baseUrl/games');
-    final resp = await http.post(uri);
+    final resp = await client.post(uri);
     if (resp.statusCode == 201) {
       final data = jsonDecode(resp.body);
       return data['gid'] as String;
@@ -44,7 +45,7 @@ class SwaggerConnection {
   /// Bei anderen Fehlern wird eine Exception geworfen.
   Future<bool> joinGame(String gid) async {
     final uri = Uri.parse('$baseUrl/games/$gid/join');
-    final resp = await http.post(uri);
+    final resp = await client.post(uri);
     if (resp.statusCode == 200) return true;
     if (resp.statusCode == 404) return false;
     throw Exception('Join game error: ${resp.statusCode}');
@@ -55,7 +56,7 @@ class SwaggerConnection {
   /// Die Daten kommen vom Endpoint /games/{gid}/players.
   Future<List<Spieler>> loadPlayers(String gid) async {
     final uri = Uri.parse('$baseUrl/games/$gid/players');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final list = jsonDecode(resp.body) as List;
       return list.map((e) => Spieler(e['uid'], e['name'], e['playernumber'] as int)).toList();
@@ -68,7 +69,7 @@ class SwaggerConnection {
   /// Jede Karte enthält Symbol, Typ, ID und Pfad zur Bilddatei.
   Future<List<Jasskarte>> getAllCards() async {
     final uri = Uri.parse('$baseUrl/cards');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final list = jsonDecode(resp.body) as List;
       return list.map((e) => Jasskarte.wheninit(
@@ -82,7 +83,7 @@ class SwaggerConnection {
   /// Die Rückgabe ist eine Jasskarte, basierend auf den vom Server gelieferten Daten.
   Future<Jasskarte> getCardByCid(String cid) async {
     final uri = Uri.parse('$baseUrl/cards/$cid');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final e = jsonDecode(resp.body);
       return Jasskarte.wheninit(e['symbol'], e['cid'], e['cardtype'], e['path']);
@@ -95,7 +96,7 @@ class SwaggerConnection {
   /// Diese Funktion hat keinen Rückgabewert, wirft aber bei Fehler eine Exception.
   Future<void> shuffleCards(String gid) async {
     final uri = Uri.parse('$baseUrl/games/$gid/cards/shuffle');
-    final resp = await http.post(uri);
+    final resp = await client.post(uri);
     if (resp.statusCode != 200) throw Exception('Shuffle error: ${resp.statusCode}');
   }
 
@@ -104,7 +105,7 @@ class SwaggerConnection {
   /// Gibt einen leeren String zurück, wenn keine Runde aktiv ist.
   Future<String> getCurrentRoundId(String gid) async {
     final uri = Uri.parse('$baseUrl/games/$gid/current-round-id');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final e = jsonDecode(resp.body);
       return e['rid'] as String;
@@ -117,7 +118,7 @@ class SwaggerConnection {
   /// Die Methode ruft den Endpunkt /games/{gid}/rounds mit JSON-Daten auf.
   Future<void> startNewRound(String gid, int whichround) async {
     final uri = Uri.parse('$baseUrl/games/$gid/rounds');
-    final resp = await http.post(
+    final resp = await client.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'whichround': whichround}),
@@ -129,7 +130,7 @@ class SwaggerConnection {
   /// Die Daten werden per POST an den Server geschickt.
   Future<void> addPlayInRound(String rid, String uid, String cid) async {
     final uri = Uri.parse('$baseUrl/rounds/$rid/plays');
-    final resp = await http.post(
+    final resp = await client.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'uid': uid, 'cid': cid}),
@@ -142,7 +143,7 @@ class SwaggerConnection {
   /// Die Karten werden als Liste zurückgegeben und enthalten dieselben Informationen wie bei getAllCards().
   Future<List<Jasskarte>> getPlayedCards(String rid) async {
     final uri = Uri.parse('$baseUrl/rounds/$rid/played-cards');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final list = jsonDecode(resp.body) as List;
       return list.map((e) => Jasskarte.wheninit(
@@ -156,7 +157,7 @@ class SwaggerConnection {
   /// Wird oft für Spielregeln oder zum Erkennen der angespielten Farbe benötigt.
   Future<String?> getFirstCardCid(String rid) async {
     final uri = Uri.parse('$baseUrl/rounds/$rid/first-card-cid');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final e = jsonDecode(resp.body);
       return e['cid'] as String?;
@@ -168,7 +169,7 @@ class SwaggerConnection {
   /// Diese Information wird laufend benötigt, um die Spielreihenfolge korrekt einzuhalten.
   Future<String> getWhosTurn(String rid) async {
     final uri = Uri.parse('$baseUrl/rounds/$rid/turn');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final e = jsonDecode(resp.body);
       return e['uid']?.toString() ?? '';
@@ -180,7 +181,7 @@ class SwaggerConnection {
   /// Dies wird nach jedem gültigen Spielzug aufgerufen.
   Future<void> updateWhosTurn(String rid, String uid) async {
     final uri = Uri.parse('$baseUrl/rounds/$rid/turn');
-    final resp = await http.put(
+    final resp = await client.put(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'uid': uid}),
@@ -192,7 +193,7 @@ class SwaggerConnection {
   /// Dieses Symbol wird für die Spiellogik beim Vergleichen von Karten verwendet.
   Future<void> updateTrumpf(String gid, String symbol) async {
     final uri = Uri.parse('$baseUrl/games/$gid/trumpf-suit');
-    final resp = await http.put(
+    final resp = await client.put(
       uri,
       headers: {'Content-Type': 'application/json'},
       // use camelCase key matching OpenAPI model attribute_map
@@ -205,7 +206,7 @@ class SwaggerConnection {
   /// Wird z. B. gebraucht, um die Zugreihenfolge zu bestimmen.
   Future<int> getUrPlayernumber(String uid, String gid) async {
     final uri = Uri.parse('$baseUrl/games/$gid/users/$uid/player-number');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final e = jsonDecode(resp.body);
       return e['playernumber'] as int;
@@ -217,7 +218,7 @@ class SwaggerConnection {
   /// Die Rückgabe ist die uid des nächsten Spielers.
   Future<String> getNextPlayerUid(String gid, int playernumber) async {
     final uri = Uri.parse('$baseUrl/games/$gid/next-player-uid?playernumber=$playernumber');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final e = jsonDecode(resp.body);
       return e['uid'] as String;
@@ -229,7 +230,7 @@ class SwaggerConnection {
   /// Wird typischerweise einmal zu Beginn der Runde verwendet.
   Future<List<Jasskarte>> getUrCards(String gid, String uid) async {
     final uri = Uri.parse('$baseUrl/games/$gid/users/$uid/cards');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final list = jsonDecode(resp.body) as List;
       return list.map((e) => Jasskarte.wheninit(
@@ -243,7 +244,7 @@ class SwaggerConnection {
   /// Die Methode akzeptiert ein JSON-Objekt, das UID und Punktestand enthält, und gibt die neue Gesamtpunktzahl zurück.
   Future<int> savePointsForUsers(String gid, Map<String, dynamic> body) async {
     final uri = Uri.parse('$baseUrl/games/$gid/update-scores');
-    final resp = await http.post(
+    final resp = await client.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
@@ -263,7 +264,7 @@ class SwaggerConnection {
     final payload = {
       'cards': cards.map((c) => c.toJson()).toList(),
     };
-    final resp = await http.post(
+    final resp = await client.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(payload),
@@ -279,7 +280,7 @@ class SwaggerConnection {
   /// Nützlich für Anzeigen oder Rundenwechsel.
   Future<int> getWhichRound(String gid) async {
     final uri = Uri.parse('$baseUrl/games/$gid/current-round-number');
-    final resp = await http.get(uri);
+    final resp = await client.get(uri);
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       return data['whichround'] as int;
@@ -290,7 +291,7 @@ class SwaggerConnection {
   /// Die Methode wird aufgerufen, nachdem die Gewinnkarte bestimmt wurde.
   Future<void> updateWinner(String rid, String uid) async {
     final uri = Uri.parse('$baseUrl/rounds/$rid/winner');
-    final resp = await http.put(
+    final resp = await client.put(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'winnerUid': uid}),    );
